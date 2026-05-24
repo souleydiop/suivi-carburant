@@ -1,4 +1,5 @@
 {
+  "id": "suivi-carburant-souleydiop-2026",
   "name": "Suivi Carburant",
   "short_name": "Carburant",
   "description": "Application de suivi carburant pour mon vehicule",
@@ -29,7 +30,7 @@
       "sizes": "1080x1920",
       "type": "image/png",
       "form_factor": "narrow",
-      "label": "Tableau de bord - Suivi Carburant"
+      "label": "Tableau de bord"
     },
     {
       "src": "screenshot2.png",
