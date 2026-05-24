@@ -14,7 +14,57 @@
   "dir": "ltr",
   "categories": ["utilities", "finance", "productivity"],
   "prefer_related_applications": false,
+
   "iarc_rating_id": "e84b072d-71b3-4d3e-86ae-31a8ce4e53b7",
+
+  "scope_extensions": [
+    { "origin": "https://souleydiop.github.io" },
+    { "origin": "https://*.github.io" }
+  ],
+
+  "file_handlers": [
+    {
+      "action": "/suivi-carburant/index.html",
+      "accept": {
+        "application/json": [".json"],
+        "text/csv": [".csv"]
+      },
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192", "type": "image/png" }],
+      "launch_type": "single-client"
+    }
+  ],
+
+  "launch_handler": {
+    "client_mode": ["focus-existing", "auto"]
+  },
+
+  "protocol_handlers": [
+    {
+      "protocol": "web+carburant",
+      "url": "/suivi-carburant/index.html?action=%s"
+    }
+  ],
+
+  "share_target": {
+    "action": "/suivi-carburant/index.html",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  },
+
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+
+  "note_taking": {
+    "new_note_url": "/suivi-carburant/index.html#nouveau"
+  },
+
+  "handle_links": "preferred",
+
   "related_applications": [
     {
       "platform": "webapp",
@@ -22,64 +72,57 @@
       "id": "suivi-carburant-souleydiop-2026"
     }
   ],
-  "scope_extensions": [
+
+  "shortcuts": [
     {
-      "origin": "https://souleydiop.github.io"
+      "name": "Nouveau plein",
+      "short_name": "Plein",
+      "description": "Enregistrer un nouveau plein de carburant",
+      "url": "/suivi-carburant/index.html#nouveau",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Historique",
+      "short_name": "Historique",
+      "description": "Voir l historique des pleins",
+      "url": "/suivi-carburant/index.html#historique",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Statistiques",
+      "short_name": "Stats",
+      "description": "Voir les statistiques de consommation",
+      "url": "/suivi-carburant/index.html#stats",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192", "type": "image/png" }]
     }
   ],
-  "file_handlers": [
+
+  "widgets": [
     {
-      "action": "/suivi-carburant/index.html",
-      "accept": {
-        "application/json": [".json"],
-        "text/csv": [".csv"]
-      }
+      "name": "Suivi Carburant",
+      "short_name": "Carburant",
+      "description": "Affiche le total depense et la consommation moyenne",
+      "tag": "fuel-widget",
+      "ms_ac_template": "widget/ac-template.json",
+      "data": "widget/data.json",
+      "type": "application/json",
+      "screenshots": [
+        { "src": "screenshot1.png", "sizes": "1080x1920", "type": "image/png", "label": "Widget carburant" }
+      ],
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192", "type": "image/png" }],
+      "backgrounds": [{ "src": "icon-192.png", "sizes": "192x192", "type": "image/png" }],
+      "auth": false,
+      "update": 86400
     }
   ],
-  "launch_handler": {
-    "client_mode": "focus-existing"
-  },
-  "edge_side_panel": {
-    "preferred_width": 400
-  },
-  "window_controls_overlay": {
-    "color": "#0a0a0f",
-    "height": 40
-  },
-  "tab_strip": {
-    "new_tab_button": {
-      "url": "/suivi-carburant/index.html"
-    }
-  },
-  "periodic_sync": {
-    "minimum_interval": 86400
-  },
+
   "icons": [
-    {
-      "src": "icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "maskable"
-    },
-    {
-      "src": "icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
-    }
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ],
+
   "screenshots": [
     {
       "src": "screenshot1.png",
@@ -101,35 +144,6 @@
       "type": "image/png",
       "form_factor": "wide",
       "label": "Vue complete Suivi Carburant"
-    }
-  ],
-  "shortcuts": [
-    {
-      "name": "Nouveau plein",
-      "short_name": "Plein",
-      "description": "Enregistrer un nouveau plein de carburant",
-      "url": "/suivi-carburant/index.html#nouveau",
-      "icons": [{ "src": "icon-192.png", "sizes": "192x192", "type": "image/png" }]
-    },
-    {
-      "name": "Historique",
-      "short_name": "Historique",
-      "description": "Voir l historique des pleins",
-      "url": "/suivi-carburant/index.html#historique",
-      "icons": [{ "src": "icon-192.png", "sizes": "192x192", "type": "image/png" }]
-    }
-  ],
-  "widgets": [
-    {
-      "name": "Carburant Widget",
-      "description": "Affiche le total depense et la consommation moyenne",
-      "tag": "fuel-widget",
-      "ms_ac_template": "widget/ac-template.json",
-      "data": "widget/data.json",
-      "type": "application/json",
-      "screenshots": [{ "src": "screenshot1.png", "sizes": "1080x1920", "type": "image/png", "label": "Widget carburant" }],
-      "icons": [{ "src": "icon-192.png", "sizes": "192x192", "type": "image/png" }],
-      "backgrounds": [{ "src": "icon-192.png", "sizes": "192x192", "type": "image/png" }]
     }
   ]
 }
