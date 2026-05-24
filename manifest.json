@@ -6,7 +6,7 @@
   "start_url": "/suivi-carburant/index.html",
   "scope": "/suivi-carburant/",
   "display": "standalone",
-  "display_override": ["standalone", "minimal-ui", "browser"],
+  "display_override": ["tabbed", "window-controls-overlay", "standalone", "minimal-ui", "browser"],
   "orientation": "portrait",
   "background_color": "#0a0a0f",
   "theme_color": "#e8a020",
@@ -14,6 +14,7 @@
   "dir": "ltr",
   "categories": ["utilities", "finance", "productivity"],
   "prefer_related_applications": false,
+  "iarc_rating_id": "e84b072d-71b3-4d3e-86ae-31a8ce4e53b7",
   "related_applications": [
     {
       "platform": "webapp",
@@ -21,6 +22,38 @@
       "id": "suivi-carburant-souleydiop-2026"
     }
   ],
+  "scope_extensions": [
+    {
+      "origin": "https://souleydiop.github.io"
+    }
+  ],
+  "file_handlers": [
+    {
+      "action": "/suivi-carburant/index.html",
+      "accept": {
+        "application/json": [".json"],
+        "text/csv": [".csv"]
+      }
+    }
+  ],
+  "launch_handler": {
+    "client_mode": "focus-existing"
+  },
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "window_controls_overlay": {
+    "color": "#0a0a0f",
+    "height": 40
+  },
+  "tab_strip": {
+    "new_tab_button": {
+      "url": "/suivi-carburant/index.html"
+    }
+  },
+  "periodic_sync": {
+    "minimum_interval": 86400
+  },
   "icons": [
     {
       "src": "icon-192.png",
@@ -76,26 +109,14 @@
       "short_name": "Plein",
       "description": "Enregistrer un nouveau plein de carburant",
       "url": "/suivi-carburant/index.html#nouveau",
-      "icons": [
-        {
-          "src": "icon-192.png",
-          "sizes": "192x192",
-          "type": "image/png"
-        }
-      ]
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192", "type": "image/png" }]
     },
     {
       "name": "Historique",
       "short_name": "Historique",
       "description": "Voir l historique des pleins",
       "url": "/suivi-carburant/index.html#historique",
-      "icons": [
-        {
-          "src": "icon-192.png",
-          "sizes": "192x192",
-          "type": "image/png"
-        }
-      ]
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192", "type": "image/png" }]
     }
   ],
   "widgets": [
@@ -106,28 +127,9 @@
       "ms_ac_template": "widget/ac-template.json",
       "data": "widget/data.json",
       "type": "application/json",
-      "screenshots": [
-        {
-          "src": "screenshot1.png",
-          "sizes": "1080x1920",
-          "type": "image/png",
-          "label": "Widget carburant"
-        }
-      ],
-      "icons": [
-        {
-          "src": "icon-192.png",
-          "sizes": "192x192",
-          "type": "image/png"
-        }
-      ],
-      "backgrounds": [
-        {
-          "src": "icon-192.png",
-          "sizes": "192x192",
-          "type": "image/png"
-        }
-      ]
+      "screenshots": [{ "src": "screenshot1.png", "sizes": "1080x1920", "type": "image/png", "label": "Widget carburant" }],
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192", "type": "image/png" }],
+      "backgrounds": [{ "src": "icon-192.png", "sizes": "192x192", "type": "image/png" }]
     }
   ]
 }
