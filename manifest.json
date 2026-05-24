@@ -2,26 +2,49 @@
   "id": "suivi-carburant-souleydiop-2026",
   "name": "Suivi Carburant",
   "short_name": "Carburant",
-  "description": "Application de suivi carburant pour mon vehicule",
+  "description": "Application de suivi carburant pour mon vehicule. Suivez vos depenses, consommation et historique de pleins.",
   "start_url": "/suivi-carburant/index.html",
   "scope": "/suivi-carburant/",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui", "browser"],
   "orientation": "portrait",
   "background_color": "#0a0a0f",
   "theme_color": "#e8a020",
   "lang": "fr",
+  "dir": "ltr",
+  "categories": ["utilities", "finance", "productivity"],
+  "prefer_related_applications": false,
+  "related_applications": [
+    {
+      "platform": "webapp",
+      "url": "https://souleydiop.github.io/suivi-carburant/manifest.json",
+      "id": "suivi-carburant-souleydiop-2026"
+    }
+  ],
   "icons": [
     {
       "src": "icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
   "screenshots": [
@@ -38,6 +61,73 @@
       "type": "image/png",
       "form_factor": "narrow",
       "label": "Historique des pleins"
+    },
+    {
+      "src": "screenshot-wide.png",
+      "sizes": "1280x800",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Vue complete Suivi Carburant"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Nouveau plein",
+      "short_name": "Plein",
+      "description": "Enregistrer un nouveau plein de carburant",
+      "url": "/suivi-carburant/index.html#nouveau",
+      "icons": [
+        {
+          "src": "icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Historique",
+      "short_name": "Historique",
+      "description": "Voir l historique des pleins",
+      "url": "/suivi-carburant/index.html#historique",
+      "icons": [
+        {
+          "src": "icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "widgets": [
+    {
+      "name": "Carburant Widget",
+      "description": "Affiche le total depense et la consommation moyenne",
+      "tag": "fuel-widget",
+      "ms_ac_template": "widget/ac-template.json",
+      "data": "widget/data.json",
+      "type": "application/json",
+      "screenshots": [
+        {
+          "src": "screenshot1.png",
+          "sizes": "1080x1920",
+          "type": "image/png",
+          "label": "Widget carburant"
+        }
+      ],
+      "icons": [
+        {
+          "src": "icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ],
+      "backgrounds": [
+        {
+          "src": "icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
     }
   ]
 }
