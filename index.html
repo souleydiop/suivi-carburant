@@ -6,224 +6,645 @@
 <meta name="theme-color" content="#e8a020"/>
 <meta name="mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
-<meta name="apple-mobile-web-app-title" content="Carburant"/>
 <meta name="description" content="Application de suivi carburant pour mon vehicule"/>
 <link rel="manifest" href="manifest.json"/>
-<link rel="icon" href="icon.svg"/>
-<link rel="apple-touch-icon" href="icon.svg"/>
+<link rel="icon" href="icon-192.png"/>
 <title>Suivi Carburant</title>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;overflow-x:hidden;background:#0a0a0f;color:#f0ede8;font-family:'Sora',sans-serif}
-::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:#2a2a3a;border-radius:4px}
 .mono{font-family:'DM Mono',monospace}
-#app{max-width:480px;margin:0 auto;padding:0 16px;padding-bottom:90px}
-.header{display:flex;justify-content:space-between;align-items:center;padding:28px 0 20px}
-.header-title{font-size:11px;color:#e8a020;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px}
-.header-name{font-size:22px;font-weight:700}
-.tabs{display:flex;gap:6px;background:#13131f;border-radius:12px;padding:5px;margin-bottom:20px}
-.tab{flex:1;padding:9px 0;border-radius:9px;font-size:12px;font-weight:600;border:none;cursor:pointer;font-family:'Sora',sans-serif;transition:all .2s;background:none;color:#888}
+#app{max-width:480px;margin:0 auto;padding:0 16px;padding-bottom:100px}
+/* Header */
+.header{display:flex;justify-content:space-between;align-items:center;padding:24px 0 16px}
+.header-sub{font-size:11px;color:#e8a020;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-bottom:3px}
+.header-title{font-size:20px;font-weight:700}
+/* Vehicle selector */
+.vehicle-bar{display:flex;gap:8px;margin-bottom:16px;overflow-x:auto;padding-bottom:4px}
+.vehicle-bar::-webkit-scrollbar{display:none}
+.veh-chip{flex-shrink:0;padding:8px 16px;border-radius:20px;font-size:12px;font-weight:600;border:1.5px solid #2a2a3a;background:#13131f;color:#888;cursor:pointer;white-space:nowrap;transition:all .2s}
+.veh-chip.active{background:#e8a020;color:#0a0a0f;border-color:#e8a020}
+.veh-chip.add-veh{border-style:dashed;color:#e8a020;border-color:#e8a020}
+/* Tabs */
+.tabs{display:flex;gap:5px;background:#13131f;border-radius:12px;padding:4px;margin-bottom:18px}
+.tab{flex:1;padding:8px 0;border-radius:9px;font-size:11px;font-weight:600;border:none;cursor:pointer;font-family:'Sora',sans-serif;transition:all .2s;background:none;color:#888}
 .tab.active{background:linear-gradient(135deg,#e8a020,#f5c842);color:#0a0a0f}
-.card{background:linear-gradient(135deg,#13131f,#1a1a2e);border:1px solid #23233a;border-radius:16px;padding:20px;margin-bottom:12px}
-.card-label{font-size:10px;color:#888;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px}
-.card-value{font-size:22px;font-weight:700}
+/* Cards */
+.card{background:linear-gradient(135deg,#13131f,#1a1a2e);border:1px solid #23233a;border-radius:16px;padding:18px;margin-bottom:11px}
+.card-label{font-size:10px;color:#888;letter-spacing:.08em;text-transform:uppercase;margin-bottom:7px}
+.card-value{font-size:21px;font-weight:700}
 .card-unit{font-size:11px;color:#555;margin-top:2px}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.form-card{background:linear-gradient(135deg,#13131f,#1a1a2e);border:1px solid #23233a;border-radius:16px;padding:20px;margin-bottom:20px}
-.form-title{font-size:11px;color:#e8a020;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:16px}
-.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
-.form-group{margin-bottom:10px}
-.form-group label{display:block;font-size:11px;color:#888;margin-bottom:5px}
-input,select{background:#13131f;border:1px solid #2a2a3a;border-radius:10px;padding:12px 14px;color:#f0ede8;font-family:'Sora',sans-serif;font-size:14px;width:100%;outline:none;transition:border .2s;-webkit-appearance:none}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+/* Form overlay */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;overflow-y:auto;padding:16px}
+.overlay.open{display:flex}
+.form-card{background:#13131f;border:1px solid #2a2a3a;border-radius:18px;padding:20px;width:100%;max-width:480px;margin:auto}
+.form-title{font-size:12px;color:#e8a020;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:14px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:9px}
+.fg{margin-bottom:9px}
+.fg label{display:block;font-size:11px;color:#888;margin-bottom:4px}
+input,select,textarea{background:#0e0e1c;border:1px solid #2a2a3a;border-radius:9px;padding:11px 13px;color:#f0ede8;font-family:'Sora',sans-serif;font-size:13px;width:100%;outline:none;transition:border .2s;-webkit-appearance:none}
 input:focus,select:focus{border-color:#e8a020}
-input::placeholder{color:#555}
-select option{background:#1a1a2e}
-.total-preview{background:#0e0e1c;border-radius:8px;padding:10px 14px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;font-size:12px}
-.total-preview span:last-child{color:#e8a020;font-weight:600;font-family:'DM Mono',monospace}
-.btn-row{display:flex;gap:10px}
-.btn-primary{background:linear-gradient(135deg,#e8a020,#f5c842);color:#0a0a0f;border:none;border-radius:10px;padding:13px 24px;font-family:'Sora',sans-serif;font-weight:700;font-size:14px;cursor:pointer;flex:2}
-.btn-ghost{background:#13131f;border:1px solid #2a2a3a;color:#f0ede8;border-radius:10px;padding:12px 20px;font-family:'Sora',sans-serif;font-size:13px;cursor:pointer;flex:1}
-.fab{position:fixed;bottom:24px;right:20px;width:58px;height:58px;border-radius:50%;background:linear-gradient(135deg,#e8a020,#f5c842);border:none;font-size:28px;color:#0a0a0f;cursor:pointer;box-shadow:0 4px 20px rgba(232,160,32,.4);z-index:100;display:flex;align-items:center;justify-content:center}
-.entry{background:#13131f;border:1px solid #1e1e30;border-radius:12px;padding:16px;margin-bottom:10px}
+input::placeholder{color:#444}
+select option{background:#13131f}
+.preview-box{background:#0a0a0f;border-radius:8px;padding:9px 13px;margin-bottom:12px;display:flex;justify-content:space-between;font-size:12px}
+.preview-box span:last-child{color:#e8a020;font-weight:700;font-family:'DM Mono',monospace}
+.btn-row{display:flex;gap:8px}
+.btn-primary{background:linear-gradient(135deg,#e8a020,#f5c842);color:#0a0a0f;border:none;border-radius:9px;padding:12px;font-family:'Sora',sans-serif;font-weight:700;font-size:13px;cursor:pointer;flex:2}
+.btn-ghost{background:#0e0e1c;border:1px solid #2a2a3a;color:#f0ede8;border-radius:9px;padding:11px;font-family:'Sora',sans-serif;font-size:12px;cursor:pointer;flex:1}
+.btn-danger{background:#2a1a1a;border:1px solid #4a2a2a;color:#e85050;border-radius:9px;padding:11px;font-family:'Sora',sans-serif;font-size:12px;cursor:pointer;flex:1}
+/* FAB */
+.fab{position:fixed;bottom:22px;right:18px;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#e8a020,#f5c842);border:none;font-size:26px;color:#0a0a0f;cursor:pointer;box-shadow:0 4px 18px rgba(232,160,32,.45);z-index:100;display:flex;align-items:center;justify-content:center}
+/* Entries */
+.entry{background:#13131f;border:1px solid #1e1e30;border-radius:12px;padding:14px;margin-bottom:9px}
 .entry-top{display:flex;justify-content:space-between;align-items:flex-start}
-.entry-date{font-size:13px;font-weight:600;margin-bottom:3px}
+.entry-date{font-size:13px;font-weight:600;margin-bottom:2px}
 .entry-km{font-size:11px;color:#888;font-family:'DM Mono',monospace}
-.entry-amount{font-size:15px;font-weight:700;color:#e8a020;text-align:right;font-family:'DM Mono',monospace}
-.entry-details{font-size:11px;color:#7dcfff;font-family:'DM Mono',monospace;text-align:right}
-.entry-bottom{display:flex;justify-content:space-between;align-items:center;margin-top:10px}
-.badges{display:flex;gap:6px;flex-wrap:wrap}
-.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:600}
-.badge-fuel{background:#1a1a2e;color:#c9a0ff;border:1px solid #2a2a45}
-.badge-station{background:#1a1a2e;color:#888;border:1px solid #2a2a45}
-.badge-good{background:#1a2a1a;color:#7dca7d;border:1px solid #2a4a2a}
-.badge-bad{background:#2a1a1a;color:#e85050;border:1px solid #4a2a2a}
-.del-btn{background:none;border:none;color:#3a3a55;font-size:18px;cursor:pointer;padding:4px}
-.entry-note{margin-top:8px;font-size:11px;color:#555;font-style:italic}
-.bar-chart{display:flex;align-items:flex-end;gap:8px;height:100px;margin-top:4px}
-.bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
-.bar-lbl{font-size:9px;color:#888;font-family:'DM Mono',monospace}
-.bar{width:100%;background:linear-gradient(135deg,#e8a020,#f5c842);border-radius:4px}
-.stat-row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid #1e1e30;font-size:13px}
+.entry-amount{font-size:14px;font-weight:700;color:#e8a020;text-align:right;font-family:'DM Mono',monospace}
+.entry-detail{font-size:10px;color:#7dcfff;font-family:'DM Mono',monospace;text-align:right}
+.entry-bottom{display:flex;justify-content:space-between;align-items:center;margin-top:9px}
+.badges{display:flex;gap:5px;flex-wrap:wrap}
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600}
+.b-fuel{background:#1a1a2e;color:#c9a0ff;border:1px solid #2a2a45}
+.b-ok{background:#1a2a1a;color:#7dca7d;border:1px solid #2a4a2a}
+.b-bad{background:#2a1a1a;color:#e85050;border:1px solid #4a2a2a}
+.b-st{background:#1a1a2e;color:#888;border:1px solid #2a2a45}
+.del-btn{background:none;border:none;color:#3a3a55;font-size:16px;cursor:pointer;padding:3px}
+.entry-note{margin-top:6px;font-size:10px;color:#555;font-style:italic}
+/* Charts */
+.chart-wrap{overflow-x:auto;padding-bottom:4px}
+.bar-chart{display:flex;align-items:flex-end;gap:6px;height:90px;min-width:max-content}
+.bar-col{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:32px}
+.bar-lbl{font-size:8px;color:#888;font-family:'DM Mono',monospace}
+.bar-date{font-size:7px;color:#555;font-family:'DM Mono',monospace;margin-top:2px}
+.bar{width:28px;background:linear-gradient(135deg,#e8a020,#f5c842);border-radius:3px}
+/* Stat rows */
+.stat-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #1e1e30;font-size:12px}
+.stat-row:last-child{border:none}
 .stat-row span:first-child{color:#888}
-.toast{position:fixed;top:24px;left:50%;transform:translateX(-50%);background:#1a3a1a;border:1px solid #3a7a3a;color:#7dca7d;padding:12px 22px;border-radius:10px;font-size:13px;z-index:999;animation:fadeInOut 2s ease;white-space:nowrap}
-.empty{text-align:center;padding:50px 20px;color:#444}
-.empty-icon{font-size:44px;margin-bottom:12px}
-@keyframes fadeInOut{0%,100%{opacity:0}15%,80%{opacity:1}}
+/* Toast */
+.toast{position:fixed;top:22px;left:50%;transform:translateX(-50%);background:#1a3a1a;border:1px solid #3a7a3a;color:#7dca7d;padding:10px 20px;border-radius:10px;font-size:12px;z-index:999;animation:fadeIO 2.2s ease;white-space:nowrap;pointer-events:none}
+/* Empty */
+.empty{text-align:center;padding:44px 16px;color:#444}
+.empty-icon{font-size:40px;margin-bottom:10px}
+/* Export buttons */
+.export-row{display:flex;gap:8px;margin-bottom:14px}
+.btn-export{flex:1;background:#13131f;border:1px solid #2a2a3a;color:#f0ede8;border-radius:10px;padding:11px;font-family:'Sora',sans-serif;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
+.btn-export:active{background:#1a1a2e}
+/* Reminder */
+.reminder-card{background:#13131f;border:1px solid #2a2a3a;border-radius:12px;padding:14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+.reminder-info{font-size:13px;font-weight:600}
+.reminder-sub{font-size:11px;color:#888;margin-top:3px}
+.toggle{width:44px;height:24px;border-radius:12px;border:none;cursor:pointer;position:relative;transition:background .2s;flex-shrink:0}
+.toggle.on{background:#e8a020}
+.toggle.off{background:#2a2a3a}
+.toggle::after{content:'';position:absolute;width:18px;height:18px;border-radius:50%;background:#fff;top:3px;transition:left .2s}
+.toggle.on::after{left:23px}
+.toggle.off::after{left:3px}
+@keyframes fadeIO{0%,100%{opacity:0}12%,82%{opacity:1}}
 </style>
 </head>
 <body>
 <div id="app">
   <div class="header">
     <div>
-      <div class="header-title">Suivi Carburant</div>
-      <div class="header-name">Mon Vehicule</div>
+      <div class="header-sub">Suivi Carburant</div>
+      <div class="header-title" id="current-veh-name">Mon Vehicule</div>
     </div>
+    <button class="btn-ghost" style="padding:8px 14px;font-size:12px;flex:none" onclick="openVehForm()">+ Vehicule</button>
   </div>
+
+  <!-- Vehicle chips -->
+  <div class="vehicle-bar" id="veh-bar"></div>
+
+  <!-- Tabs -->
   <div class="tabs">
     <button class="tab active" onclick="showTab('dashboard')">Tableau</button>
     <button class="tab" onclick="showTab('history')">Historique</button>
-    <button class="tab" onclick="showTab('stats')">Stats</button>
+    <button class="tab" onclick="showTab('stats')">Graphiques</button>
+    <button class="tab" onclick="showTab('settings')">Rappels</button>
   </div>
+
   <div id="tab-dashboard"></div>
   <div id="tab-history" style="display:none"></div>
   <div id="tab-stats" style="display:none"></div>
+  <div id="tab-settings" style="display:none"></div>
 </div>
-<button class="fab" onclick="toggleForm()">+</button>
-<div id="form-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;overflow-y:auto;padding:20px">
-  <div style="max-width:480px;margin:0 auto;padding-top:20px">
-    <div class="form-card">
-      <div class="form-title">Nouveau plein</div>
-      <div class="form-row">
-        <div class="form-group"><label>Date</label><input type="date" id="f-date"/></div>
-        <div class="form-group"><label>Kilometrage (km)</label><input type="number" id="f-km" placeholder="45230" class="mono"/></div>
-      </div>
-      <div class="form-row">
-        <div class="form-group"><label>Litres</label><input type="number" id="f-liters" placeholder="40.5" class="mono" oninput="updatePreview()"/></div>
-        <div class="form-group"><label>Prix/L (FCFA)</label><input type="number" id="f-price" placeholder="755" class="mono" oninput="updatePreview()"/></div>
-      </div>
-      <div class="form-group"><label>Type carburant</label>
-        <select id="f-fuel"><option>Essence</option><option>Diesel</option><option>Sans Plomb 95</option><option>Sans Plomb 98</option><option>GPL</option></select>
-      </div>
-      <div class="form-group"><label>Station (optionnel)</label><input type="text" id="f-station" placeholder="Total Dakar"/></div>
-      <div class="form-group"><label>Note (optionnel)</label><input type="text" id="f-note" placeholder="Plein complet"/></div>
-      <div class="total-preview" id="total-preview" style="display:none">
-        <span>Total estime</span><span id="total-val"></span>
-      </div>
-      <div class="btn-row">
-        <button class="btn-ghost" onclick="closeForm()">Annuler</button>
-        <button class="btn-primary" onclick="saveEntry()">Enregistrer</button>
-      </div>
+
+<button class="fab" onclick="openEntryForm()">+</button>
+
+<!-- Entry form -->
+<div class="overlay" id="entry-overlay">
+  <div class="form-card">
+    <div class="form-title">Nouveau plein</div>
+    <div class="form-row">
+      <div class="fg"><label>Date</label><input type="date" id="f-date"/></div>
+      <div class="fg"><label>Kilometrage (km)</label><input type="number" id="f-km" placeholder="45230" class="mono"/></div>
+    </div>
+    <div class="form-row">
+      <div class="fg"><label>Litres</label><input type="number" id="f-liters" placeholder="40.5" class="mono" oninput="updatePreview()"/></div>
+      <div class="fg"><label>Prix/L (FCFA)</label><input type="number" id="f-price" placeholder="755" class="mono" oninput="updatePreview()"/></div>
+    </div>
+    <div class="fg"><label>Type carburant</label>
+      <select id="f-fuel"><option>Essence</option><option>Diesel</option><option>Sans Plomb 95</option><option>Sans Plomb 98</option><option>GPL</option></select>
+    </div>
+    <div class="form-row">
+      <div class="fg"><label>Station (optionnel)</label><input type="text" id="f-station" placeholder="Total Dakar"/></div>
+      <div class="fg"><label>Note (optionnel)</label><input type="text" id="f-note" placeholder="Plein complet"/></div>
+    </div>
+    <div class="preview-box" id="preview" style="display:none">
+      <span>Total estime</span><span id="preview-val"></span>
+    </div>
+    <div class="btn-row">
+      <button class="btn-ghost" onclick="closeOverlay('entry-overlay')">Annuler</button>
+      <button class="btn-primary" onclick="saveEntry()">Enregistrer</button>
     </div>
   </div>
 </div>
+
+<!-- Vehicle form -->
+<div class="overlay" id="veh-overlay">
+  <div class="form-card">
+    <div class="form-title">Ajouter un vehicule</div>
+    <div class="fg"><label>Nom du vehicule</label><input type="text" id="v-name" placeholder="ex: Ma Voiture, Moto..."/></div>
+    <div class="form-row">
+      <div class="fg"><label>Marque</label><input type="text" id="v-brand" placeholder="Toyota"/></div>
+      <div class="fg"><label>Modele</label><input type="text" id="v-model" placeholder="Corolla"/></div>
+    </div>
+    <div class="fg"><label>Carburant par defaut</label>
+      <select id="v-fuel"><option>Essence</option><option>Diesel</option><option>Sans Plomb 95</option><option>Sans Plomb 98</option><option>GPL</option></select>
+    </div>
+    <div class="btn-row">
+      <button class="btn-ghost" onclick="closeOverlay('veh-overlay')">Annuler</button>
+      <button class="btn-primary" onclick="saveVehicle()">Ajouter</button>
+    </div>
+  </div>
+</div>
+
 <script>
-const STORE_KEY='fuel_v2';
-let entries=[];
-function load(){try{entries=JSON.parse(localStorage.getItem(STORE_KEY)||'[]')}catch(e){entries=[]}}
-function save(){localStorage.setItem(STORE_KEY,JSON.stringify(entries))}
-function fmtDate(d){return new Date(d).toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'})}
-function fmtNum(n){return n.toLocaleString('fr-FR')}
-function getConsos(){
-  const s=[...entries].sort((a,b)=>new Date(a.date)-new Date(b.date));
-  const r=[];
-  for(let i=1;i<s.length;i++){const p=s[i-1],c=s[i],d=c.km-p.km;if(d>0)r.push({...c,dist:d,conso:(c.liters/d)*100})}
+// ======= DATA =======
+const SK = 'fuel_v3';
+let data = { vehicles: [], entries: [], reminders: { plein: false, km: false, kmInterval: 5000 } };
+let currentVehId = null;
+
+function load() {
+  try { data = JSON.parse(localStorage.getItem(SK) || 'null') || data; } catch(e) {}
+  if (!data.vehicles) data.vehicles = [];
+  if (!data.entries) data.entries = [];
+  if (!data.reminders) data.reminders = { plein: false, km: false, kmInterval: 5000 };
+  if (data.vehicles.length === 0) {
+    data.vehicles.push({ id: Date.now(), name: 'Mon Vehicule', brand: '', model: '', fuel: 'Essence' });
+    saveData();
+  }
+  currentVehId = data.vehicles[0].id;
+}
+function saveData() { localStorage.setItem(SK, JSON.stringify(data)); }
+function fmtDate(d) { return new Date(d).toLocaleDateString('fr-FR', {day:'2-digit',month:'short',year:'numeric'}); }
+function fmtNum(n) { return n.toLocaleString('fr-FR'); }
+function currentEntries() { return data.entries.filter(e => e.vehId === currentVehId); }
+function currentVehicle() { return data.vehicles.find(v => v.id === currentVehId); }
+
+function getConsos(entries) {
+  const s = [...entries].sort((a,b) => new Date(a.date)-new Date(b.date));
+  const r = [];
+  for (let i=1; i<s.length; i++) {
+    const p=s[i-1], c=s[i], d=c.km-p.km;
+    if (d>0) r.push({...c, dist:d, conso:(c.liters/d)*100});
+  }
   return r;
 }
-function renderDashboard(){
-  const total=entries.reduce((s,e)=>s+e.total,0);
-  const liters=entries.reduce((s,e)=>s+e.liters,0);
-  const avgPrice=liters>0?total/liters:0;
-  const consos=getConsos();
-  const avgConso=consos.length>0?consos.reduce((s,c)=>s+c.conso,0)/consos.length:null;
-  const sorted=[...entries].sort((a,b)=>new Date(a.date)-new Date(b.date));
-  const dist=sorted.length>1?sorted[sorted.length-1].km-sorted[0].km:0;
-  const cc=avgConso?(avgConso>10?'#e85050':'#7dca7d'):'#555';
-  document.getElementById('tab-dashboard').innerHTML=`
+
+// ======= RENDER VEHICLES =======
+function renderVehicleBar() {
+  const bar = document.getElementById('veh-bar');
+  bar.innerHTML = data.vehicles.map(v => `
+    <div class="veh-chip ${v.id===currentVehId?'active':''}" onclick="selectVeh(${v.id})">
+      ${v.name}${v.brand?' · '+v.brand:''}
+    </div>
+  `).join('');
+  const cv = currentVehicle();
+  document.getElementById('current-veh-name').textContent = cv ? cv.name : 'Mon Vehicule';
+}
+
+function selectVeh(id) {
+  currentVehId = id;
+  renderVehicleBar();
+  renderAll();
+}
+
+// ======= DASHBOARD =======
+function renderDashboard() {
+  const ents = currentEntries();
+  const total = ents.reduce((s,e)=>s+e.total,0);
+  const liters = ents.reduce((s,e)=>s+e.liters,0);
+  const avgPrice = liters>0?total/liters:0;
+  const consos = getConsos(ents);
+  const avgConso = consos.length>0?consos.reduce((s,c)=>s+c.conso,0)/consos.length:null;
+  const sorted = [...ents].sort((a,b)=>new Date(a.date)-new Date(b.date));
+  const dist = sorted.length>1?sorted[sorted.length-1].km-sorted[0].km:0;
+  const cc = avgConso?(avgConso>10?'#e85050':'#7dca7d'):'#555';
+  const lastEntry = sorted[sorted.length-1];
+
+  document.getElementById('tab-dashboard').innerHTML = `
     <div class="grid2">
       <div class="card"><div class="card-label">Total depense</div><div class="card-value mono" style="color:#e8a020">${fmtNum(Math.round(total))}</div><div class="card-unit">FCFA</div></div>
       <div class="card"><div class="card-label">Litres cumules</div><div class="card-value mono" style="color:#7dcfff">${liters.toFixed(1)}</div><div class="card-unit">litres</div></div>
       <div class="card"><div class="card-label">Conso moyenne</div><div class="card-value mono" style="color:${cc}">${avgConso?avgConso.toFixed(1):'--'}</div><div class="card-unit">L/100km</div></div>
       <div class="card"><div class="card-label">Distance totale</div><div class="card-value mono" style="color:#c9a0ff">${fmtNum(dist)}</div><div class="card-unit">km parcourus</div></div>
     </div>
-    <div class="card"><div class="card-label">Prix moyen au litre</div><div style="display:flex;align-items:baseline;gap:8px"><span class="mono" style="font-size:28px;font-weight:700">${avgPrice?avgPrice.toFixed(0):'--'}</span><span style="font-size:13px;color:#888">FCFA/L</span></div></div>
-    ${entries.length===0?'<div class="empty"><div class="empty-icon">&#9981;</div><div>Ajoutez votre premier plein avec le bouton +</div></div>':''}`;
+    <div class="card">
+      <div class="card-label">Prix moyen au litre</div>
+      <div style="display:flex;align-items:baseline;gap:8px">
+        <span class="mono" style="font-size:26px;font-weight:700">${avgPrice?avgPrice.toFixed(0):'--'}</span>
+        <span style="font-size:12px;color:#888">FCFA/L</span>
+      </div>
+    </div>
+    ${lastEntry?`<div class="card"><div class="card-label">Dernier plein</div><div style="display:flex;justify-content:space-between"><span class="mono" style="font-size:14px;font-weight:600">${fmtDate(lastEntry.date)}</span><span class="mono" style="color:#e8a020">${fmtNum(Math.round(lastEntry.total))} FCFA</span></div><div style="font-size:11px;color:#888;margin-top:4px">${fmtNum(lastEntry.km)} km · ${lastEntry.liters} L</div></div>`:''}
+    ${ents.length===0?'<div class="empty"><div class="empty-icon">&#9981;</div><div>Ajoutez votre premier plein avec +</div></div>':''}
+  `;
 }
-function renderHistory(){
-  const sorted=[...entries].sort((a,b)=>new Date(b.date)-new Date(a.date));
-  if(!sorted.length){document.getElementById('tab-history').innerHTML='<div class="empty"><div class="empty-icon">&#128203;</div><div>Aucun plein enregistre</div></div>';return}
-  const all=[...entries].sort((a,b)=>new Date(a.date)-new Date(b.date));
-  let html='';
-  sorted.forEach(e=>{
-    const idx=all.findIndex(x=>x.id===e.id);
-    let ch='';
-    if(idx>0){const p=all[idx-1],d=e.km-p.km;if(d>0){const c=(e.liters/d*100).toFixed(1);ch=`<span class="badge ${c>10?'badge-bad':'badge-good'}">${c} L/100</span>`}}
-    html+=`<div class="entry"><div class="entry-top"><div><div class="entry-date">${fmtDate(e.date)}</div><div class="entry-km">${fmtNum(e.km)} km</div></div><div><div class="entry-amount">${fmtNum(Math.round(e.total))} FCFA</div><div class="entry-details">${e.liters} L - ${fmtNum(e.pricePerLiter)} F/L</div></div></div><div class="entry-bottom"><div class="badges"><span class="badge badge-fuel">${e.fuelType}</span>${e.station?`<span class="badge badge-station">${e.station}</span>`:''}${ch}</div><button class="del-btn" onclick="deleteEntry(${e.id})">&#128465;</button></div>${e.note?`<div class="entry-note">${e.note}</div>`:''}</div>`;
-  });
-  document.getElementById('tab-history').innerHTML=html;
-}
-function renderStats(){
-  const consos=getConsos();
-  if(consos.length<2){document.getElementById('tab-stats').innerHTML='<div class="empty"><div class="empty-icon">&#128200;</div><div>Ajoutez au moins 2 pleins pour voir les statistiques</div></div>';return}
-  const last10=consos.slice(-10);
-  const maxC=Math.max(...last10.map(c=>c.conso));
-  const bars=last10.map(c=>`<div class="bar-wrap"><div class="bar-lbl">${c.conso.toFixed(1)}</div><div class="bar" style="height:${Math.max(8,(c.conso/maxC)*90)}px"></div></div>`).join('');
-  const minC=Math.min(...consos.map(c=>c.conso)),maxConso=Math.max(...consos.map(c=>c.conso));
-  const minP=Math.min(...entries.map(e=>e.pricePerLiter)),maxP=Math.max(...entries.map(e=>e.pricePerLiter));
-  document.getElementById('tab-stats').innerHTML=`
-    <div class="card"><div class="card-label">Consommation par plein (L/100km)</div><div class="bar-chart">${bars}</div></div>
-    <div class="card"><div class="card-label" style="margin-bottom:12px">Resume</div>
-      <div class="stat-row"><span>Meilleure conso</span><span class="mono" style="color:#7dca7d">${minC.toFixed(1)} L/100</span></div>
-      <div class="stat-row"><span>Pire conso</span><span class="mono" style="color:#e85050">${maxConso.toFixed(1)} L/100</span></div>
-      <div class="stat-row"><span>Prix min/L</span><span class="mono" style="color:#7dcfff">${fmtNum(minP)} FCFA</span></div>
-      <div class="stat-row"><span>Prix max/L</span><span class="mono" style="color:#f5a623">${fmtNum(maxP)} FCFA</span></div>
-      <div class="stat-row" style="border:none"><span>Nombre de pleins</span><span class="mono" style="color:#c9a0ff">${entries.length}</span></div>
+
+// ======= HISTORY =======
+function renderHistory() {
+  const ents = currentEntries();
+  const sorted = [...ents].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const allSorted = [...ents].sort((a,b)=>new Date(a.date)-new Date(b.date));
+
+  let html = `<div class="export-row">
+    <button class="btn-export" onclick="exportCSV()">&#128196; Export CSV</button>
+    <button class="btn-export" onclick="exportPDF()">&#128209; Export PDF</button>
+  </div>`;
+
+  if (!sorted.length) {
+    html += '<div class="empty"><div class="empty-icon">&#128203;</div><div>Aucun plein enregistre</div></div>';
+    document.getElementById('tab-history').innerHTML = html;
+    return;
+  }
+
+  sorted.forEach(e => {
+    const idx = allSorted.findIndex(x=>x.id===e.id);
+    let ch = '';
+    if (idx>0) {
+      const p=allSorted[idx-1], d=e.km-p.km;
+      if (d>0) { const c=(e.liters/d*100).toFixed(1); ch=`<span class="badge ${c>10?'b-bad':'b-ok'}">${c} L/100</span>`; }
+    }
+    html += `<div class="entry">
+      <div class="entry-top">
+        <div><div class="entry-date">${fmtDate(e.date)}</div><div class="entry-km">${fmtNum(e.km)} km</div></div>
+        <div><div class="entry-amount">${fmtNum(Math.round(e.total))} FCFA</div><div class="entry-detail">${e.liters} L · ${fmtNum(e.pricePerLiter)} F/L</div></div>
+      </div>
+      <div class="entry-bottom">
+        <div class="badges">
+          <span class="badge b-fuel">${e.fuelType}</span>
+          ${e.station?`<span class="badge b-st">${e.station}</span>`:''}
+          ${ch}
+        </div>
+        <button class="del-btn" onclick="deleteEntry(${e.id})">&#128465;</button>
+      </div>
+      ${e.note?`<div class="entry-note">${e.note}</div>`:''}
     </div>`;
+  });
+  document.getElementById('tab-history').innerHTML = html;
 }
-function showTab(t){
-  ['dashboard','history','stats'].forEach((id,i)=>{
+
+// ======= STATS / CHARTS =======
+function renderStats() {
+  const ents = currentEntries();
+  const consos = getConsos(ents);
+  const sorted = [...ents].sort((a,b)=>new Date(a.date)-new Date(b.date));
+
+  if (consos.length < 2) {
+    document.getElementById('tab-stats').innerHTML = '<div class="empty"><div class="empty-icon">&#128200;</div><div>Ajoutez au moins 2 pleins pour voir les graphiques</div></div>';
+    return;
+  }
+
+  // Conso chart
+  const last10c = consos.slice(-10);
+  const maxC = Math.max(...last10c.map(c=>c.conso));
+  const consoBar = last10c.map(c => `
+    <div class="bar-col">
+      <div class="bar-lbl">${c.conso.toFixed(1)}</div>
+      <div class="bar" style="height:${Math.max(6,(c.conso/maxC)*80)}px;background:${c.conso>10?'linear-gradient(135deg,#e85050,#ff7070)':'linear-gradient(135deg,#e8a020,#f5c842)'}"></div>
+      <div class="bar-date">${new Date(c.date).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'})}</div>
+    </div>`).join('');
+
+  // Depenses chart
+  const last10d = sorted.slice(-10);
+  const maxD = Math.max(...last10d.map(e=>e.total));
+  const depBar = last10d.map(e => `
+    <div class="bar-col">
+      <div class="bar-lbl">${Math.round(e.total/1000)}k</div>
+      <div class="bar" style="height:${Math.max(6,(e.total/maxD)*80)}px;background:linear-gradient(135deg,#7dcfff,#c9a0ff)"></div>
+      <div class="bar-date">${new Date(e.date).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'})}</div>
+    </div>`).join('');
+
+  // Prix/L chart
+  const last10p = sorted.slice(-10);
+  const maxP2 = Math.max(...last10p.map(e=>e.pricePerLiter));
+  const minP2 = Math.min(...last10p.map(e=>e.pricePerLiter));
+  const prxBar = last10p.map(e => `
+    <div class="bar-col">
+      <div class="bar-lbl">${e.pricePerLiter}</div>
+      <div class="bar" style="height:${Math.max(6,((e.pricePerLiter-minP2+50)/(maxP2-minP2+50))*80)}px;background:linear-gradient(135deg,#7dca7d,#c9a0ff)"></div>
+      <div class="bar-date">${new Date(e.date).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'})}</div>
+    </div>`).join('');
+
+  const minConso=Math.min(...consos.map(c=>c.conso)), maxConso=Math.max(...consos.map(c=>c.conso));
+  const minPrix=Math.min(...ents.map(e=>e.pricePerLiter)), maxPrix=Math.max(...ents.map(e=>e.pricePerLiter));
+
+  // Depenses par mois
+  const byMonth = {};
+  ents.forEach(e => {
+    const m = e.date.substring(0,7);
+    byMonth[m] = (byMonth[m]||0) + e.total;
+  });
+  const months = Object.keys(byMonth).sort().slice(-6);
+  const maxM = Math.max(...months.map(m=>byMonth[m]));
+  const monthBar = months.map(m => `
+    <div class="bar-col">
+      <div class="bar-lbl">${Math.round(byMonth[m]/1000)}k</div>
+      <div class="bar" style="height:${Math.max(6,(byMonth[m]/maxM)*80)}px;background:linear-gradient(135deg,#e8a020,#f5c842)"></div>
+      <div class="bar-date">${m.substring(5)}/</div>
+    </div>`).join('');
+
+  document.getElementById('tab-stats').innerHTML = `
+    <div class="card">
+      <div class="card-label">Consommation L/100km</div>
+      <div class="chart-wrap"><div class="bar-chart">${consoBar}</div></div>
+    </div>
+    <div class="card">
+      <div class="card-label">Depenses par plein (FCFA)</div>
+      <div class="chart-wrap"><div class="bar-chart">${depBar}</div></div>
+    </div>
+    <div class="card">
+      <div class="card-label">Evolution prix au litre (FCFA)</div>
+      <div class="chart-wrap"><div class="bar-chart">${prxBar}</div></div>
+    </div>
+    <div class="card">
+      <div class="card-label">Depenses mensuelles (FCFA)</div>
+      <div class="chart-wrap"><div class="bar-chart">${monthBar}</div></div>
+    </div>
+    <div class="card">
+      <div class="card-label" style="margin-bottom:10px">Resume complet</div>
+      <div class="stat-row"><span>Meilleure conso</span><span class="mono" style="color:#7dca7d">${minConso.toFixed(1)} L/100</span></div>
+      <div class="stat-row"><span>Pire conso</span><span class="mono" style="color:#e85050">${maxConso.toFixed(1)} L/100</span></div>
+      <div class="stat-row"><span>Prix min/L</span><span class="mono" style="color:#7dcfff">${fmtNum(minPrix)} FCFA</span></div>
+      <div class="stat-row"><span>Prix max/L</span><span class="mono" style="color:#f5a623">${fmtNum(maxPrix)} FCFA</span></div>
+      <div class="stat-row"><span>Nombre de pleins</span><span class="mono" style="color:#c9a0ff">${ents.length}</span></div>
+      <div class="stat-row"><span>Total depense</span><span class="mono" style="color:#e8a020">${fmtNum(Math.round(ents.reduce((s,e)=>s+e.total,0)))} FCFA</span></div>
+    </div>
+  `;
+}
+
+// ======= REMINDERS =======
+function renderSettings() {
+  const r = data.reminders;
+  document.getElementById('tab-settings').innerHTML = `
+    <div class="card" style="margin-bottom:10px">
+      <div class="card-label" style="margin-bottom:12px">Rappels automatiques</div>
+      <div class="reminder-card">
+        <div>
+          <div class="reminder-info">Rappel de plein</div>
+          <div class="reminder-sub">Notification quand le reservoir est bas</div>
+        </div>
+        <button class="toggle ${r.plein?'on':'off'}" onclick="toggleReminder('plein')" id="tog-plein"></button>
+      </div>
+      <div class="reminder-card">
+        <div>
+          <div class="reminder-info">Rappel kilometrage</div>
+          <div class="reminder-sub">Tous les ${fmtNum(r.kmInterval)} km</div>
+        </div>
+        <button class="toggle ${r.km?'on':'off'}" onclick="toggleReminder('km')" id="tog-km"></button>
+      </div>
+      <div class="fg" style="margin-top:10px">
+        <label>Intervalle rappel (km)</label>
+        <input type="number" value="${r.kmInterval}" id="km-interval" placeholder="5000" onchange="updateKmInterval(this.value)" class="mono"/>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-label" style="margin-bottom:12px">Gestion des vehicules</div>
+      ${data.vehicles.map(v => `
+        <div class="reminder-card">
+          <div>
+            <div class="reminder-info">${v.name}</div>
+            <div class="reminder-sub">${v.brand?v.brand+' '+v.model:'Aucune marque'} · ${v.fuel}</div>
+          </div>
+          ${data.vehicles.length>1?`<button class="del-btn" onclick="deleteVehicle(${v.id})" style="font-size:18px">&#128465;</button>`:''}
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function toggleReminder(type) {
+  data.reminders[type] = !data.reminders[type];
+  if (data.reminders[type] && 'Notification' in window) {
+    Notification.requestPermission().then(p => {
+      if (p === 'granted') showToast('Rappels actives !');
+      else showToast('Activez les notifications dans les parametres');
+    });
+  }
+  saveData();
+  renderSettings();
+}
+
+function updateKmInterval(val) {
+  data.reminders.kmInterval = parseInt(val) || 5000;
+  saveData();
+}
+
+function deleteVehicle(id) {
+  if (!confirm('Supprimer ce vehicule et tous ses pleins ?')) return;
+  data.vehicles = data.vehicles.filter(v=>v.id!==id);
+  data.entries = data.entries.filter(e=>e.vehId!==id);
+  if (data.vehicles.length > 0) currentVehId = data.vehicles[0].id;
+  saveData();
+  renderVehicleBar();
+  renderAll();
+}
+
+// ======= FORMS =======
+function openEntryForm() {
+  document.getElementById('f-date').value = new Date().toISOString().split('T')[0];
+  ['f-km','f-liters','f-price','f-station','f-note'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('preview').style.display='none';
+  const cv = currentVehicle();
+  if (cv) document.getElementById('f-fuel').value = cv.fuel;
+  document.getElementById('entry-overlay').classList.add('open');
+}
+
+function openVehForm() {
+  ['v-name','v-brand','v-model'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('veh-overlay').classList.add('open');
+}
+
+function closeOverlay(id) { document.getElementById(id).classList.remove('open'); }
+
+function updatePreview() {
+  const l=parseFloat(document.getElementById('f-liters').value||0);
+  const p=parseFloat(document.getElementById('f-price').value||0);
+  const prev=document.getElementById('preview');
+  if(l&&p){prev.style.display='flex';document.getElementById('preview-val').textContent=fmtNum(Math.round(l*p))+' FCFA';}
+  else prev.style.display='none';
+}
+
+function saveEntry() {
+  const km=parseFloat(document.getElementById('f-km').value);
+  const liters=parseFloat(document.getElementById('f-liters').value);
+  const price=parseFloat(document.getElementById('f-price').value);
+  const date=document.getElementById('f-date').value;
+  if(!km||!liters||!price||!date){alert('Remplis la date, le kilometrage, les litres et le prix.');return;}
+  data.entries.push({
+    id:Date.now(), vehId:currentVehId, date, km, liters,
+    pricePerLiter:price, total:liters*price,
+    fuelType:document.getElementById('f-fuel').value,
+    station:document.getElementById('f-station').value,
+    note:document.getElementById('f-note').value
+  });
+  saveData();
+  closeOverlay('entry-overlay');
+  showToast('Plein enregistre !');
+  showTab('history');
+}
+
+function saveVehicle() {
+  const name=document.getElementById('v-name').value.trim();
+  if(!name){alert('Donne un nom au vehicule.');return;}
+  const v = {
+    id:Date.now(), name,
+    brand:document.getElementById('v-brand').value,
+    model:document.getElementById('v-model').value,
+    fuel:document.getElementById('v-fuel').value
+  };
+  data.vehicles.push(v);
+  currentVehId = v.id;
+  saveData();
+  closeOverlay('veh-overlay');
+  renderVehicleBar();
+  renderAll();
+  showToast('Vehicule ajoute !');
+}
+
+function deleteEntry(id) {
+  if(!confirm('Supprimer ce plein ?'))return;
+  data.entries=data.entries.filter(e=>e.id!==id);
+  saveData();
+  renderAll();
+}
+
+// ======= EXPORT =======
+function exportCSV() {
+  const ents = currentEntries().sort((a,b)=>new Date(a.date)-new Date(b.date));
+  if(!ents.length){showToast('Aucune donnee a exporter');return;}
+  const cv = currentVehicle();
+  let csv = 'Date,Kilometrage,Litres,Prix/L,Total,Carburant,Station,Note\n';
+  ents.forEach(e => {
+    csv += `${e.date},${e.km},${e.liters},${e.pricePerLiter},${Math.round(e.total)},${e.fuelType},${e.station||''},${e.note||''}\n`;
+  });
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href=url; a.download=`carburant_${cv?cv.name:'vehicule'}_${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('CSV telecharge !');
+}
+
+function exportPDF() {
+  const ents = currentEntries().sort((a,b)=>new Date(a.date)-new Date(b.date));
+  if(!ents.length){showToast('Aucune donnee a exporter');return;}
+  const cv = currentVehicle();
+  const total=ents.reduce((s,e)=>s+e.total,0);
+  const liters=ents.reduce((s,e)=>s+e.liters,0);
+  const consos=getConsos(ents);
+  const avgConso=consos.length>0?consos.reduce((s,c)=>s+c.conso,0)/consos.length:null;
+  const sorted=ents;
+  const dist=sorted.length>1?sorted[sorted.length-1].km-sorted[0].km:0;
+
+  let rows = ents.map(e=>`
+    <tr>
+      <td>${fmtDate(e.date)}</td>
+      <td>${fmtNum(e.km)}</td>
+      <td>${e.liters}</td>
+      <td>${fmtNum(e.pricePerLiter)}</td>
+      <td><b>${fmtNum(Math.round(e.total))}</b></td>
+      <td>${e.fuelType}</td>
+      <td>${e.station||'-'}</td>
+    </tr>`).join('');
+
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"/>
+  <title>Suivi Carburant - ${cv?cv.name:''}</title>
+  <style>
+    body{font-family:Arial,sans-serif;padding:30px;color:#222;font-size:13px}
+    h1{color:#e8a020;margin-bottom:4px}
+    .meta{color:#888;margin-bottom:24px;font-size:12px}
+    .stats{display:flex;gap:20px;margin-bottom:24px;flex-wrap:wrap}
+    .stat{background:#f5f5f5;border-radius:8px;padding:12px 20px;min-width:120px}
+    .stat-label{font-size:10px;color:#888;text-transform:uppercase;margin-bottom:4px}
+    .stat-val{font-size:20px;font-weight:bold;color:#e8a020}
+    table{width:100%;border-collapse:collapse;font-size:12px}
+    th{background:#e8a020;color:#fff;padding:8px;text-align:left}
+    td{padding:7px 8px;border-bottom:1px solid #eee}
+    tr:nth-child(even) td{background:#fafafa}
+  </style></head><body>
+  <h1>Suivi Carburant</h1>
+  <div class="meta">Vehicule: ${cv?cv.name+' '+(cv.brand||''):''} · Genere le ${new Date().toLocaleDateString('fr-FR')}</div>
+  <div class="stats">
+    <div class="stat"><div class="stat-label">Total depense</div><div class="stat-val">${fmtNum(Math.round(total))} FCFA</div></div>
+    <div class="stat"><div class="stat-label">Litres total</div><div class="stat-val">${liters.toFixed(1)} L</div></div>
+    <div class="stat"><div class="stat-label">Distance</div><div class="stat-val">${fmtNum(dist)} km</div></div>
+    <div class="stat"><div class="stat-label">Conso moy.</div><div class="stat-val">${avgConso?avgConso.toFixed(1):'--'} L/100</div></div>
+    <div class="stat"><div class="stat-label">Nb pleins</div><div class="stat-val">${ents.length}</div></div>
+  </div>
+  <table>
+    <tr><th>Date</th><th>Km</th><th>Litres</th><th>Prix/L</th><th>Total (FCFA)</th><th>Carburant</th><th>Station</th></tr>
+    ${rows}
+  </table>
+  </body></html>`;
+
+  const blob=new Blob([html],{type:'text/html;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download=`carburant_${cv?cv.name:'vehicule'}_${new Date().toISOString().split('T')[0]}.html`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('PDF pret - ouvre et imprime en PDF !');
+}
+
+// ======= TABS =======
+let currentTab = 'dashboard';
+function showTab(t) {
+  ['dashboard','history','stats','settings'].forEach((id,i)=>{
     document.getElementById('tab-'+id).style.display=id===t?'block':'none';
     document.querySelectorAll('.tab')[i].classList.toggle('active',id===t);
   });
+  currentTab=t;
   renderAll();
 }
-function renderAll(){renderDashboard();renderHistory();renderStats()}
-function toggleForm(){
-  const el=document.getElementById('form-overlay');
-  el.style.display=el.style.display==='none'?'flex':'none';
-  if(el.style.display==='flex'){
-    document.getElementById('f-date').value=new Date().toISOString().split('T')[0];
-    ['f-km','f-liters','f-price','f-station','f-note'].forEach(id=>document.getElementById(id).value='');
-    document.getElementById('total-preview').style.display='none';
-  }
+
+function renderAll() {
+  renderDashboard();
+  renderHistory();
+  renderStats();
+  renderSettings();
 }
-function closeForm(){document.getElementById('form-overlay').style.display='none'}
-function updatePreview(){
-  const l=parseFloat(document.getElementById('f-liters').value||0),p=parseFloat(document.getElementById('f-price').value||0);
-  const prev=document.getElementById('total-preview');
-  if(l&&p){prev.style.display='flex';document.getElementById('total-val').textContent=fmtNum(Math.round(l*p))+' FCFA'}
-  else prev.style.display='none';
+
+function showToast(msg) {
+  const t=document.createElement('div');
+  t.className='toast';t.textContent=msg;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(),2200);
 }
-function saveEntry(){
-  const km=parseFloat(document.getElementById('f-km').value),liters=parseFloat(document.getElementById('f-liters').value),price=parseFloat(document.getElementById('f-price').value),date=document.getElementById('f-date').value;
-  if(!km||!liters||!price||!date){alert('Remplis la date, le kilometrage, les litres et le prix.');return}
-  entries.push({id:Date.now(),date,km,liters,pricePerLiter:price,total:liters*price,fuelType:document.getElementById('f-fuel').value,station:document.getElementById('f-station').value,note:document.getElementById('f-note').value});
-  save();closeForm();showToast('Plein enregistre !');showTab('history');
-}
-function deleteEntry(id){if(!confirm('Supprimer ce plein ?'))return;entries=entries.filter(e=>e.id!==id);save();renderAll()}
-function showToast(msg){const t=document.createElement('div');t.className='toast';t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),2000)}
 
 // Service Worker
 if('serviceWorker' in navigator){
   navigator.serviceWorker.register('./sw.js').catch(()=>{});
 }
 
-// PWA Install
-let deferredPrompt=null;
-window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;});
-
-load();renderAll();
+load();
+renderVehicleBar();
+renderAll();
 </script>
 </body>
 </html>
