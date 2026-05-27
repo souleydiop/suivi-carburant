@@ -1624,6 +1624,11 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.addEventListener('controllerchange', () => {
       window.location.reload();
     });
+
+    // Handle RELOAD message from new SW
+    navigator.serviceWorker.addEventListener('message', e => {
+      if (e.data && e.data.type === 'RELOAD') window.location.reload();
+    });
   });
 }
 
