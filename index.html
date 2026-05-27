@@ -1252,11 +1252,24 @@ function openImportModal() {
       <span style="color:var(--purple)">📥 Charger des opérations</span>
       <button class="modal-close" onclick="document.getElementById('modal-container').innerHTML=''">✕</button>
     </div>
-    <div style="font-size:12px;color:var(--text3);margin-bottom:16px;line-height:1.6">
-      Une opération par ligne :<br/>
-      <code style="color:var(--cyan);font-size:11px">DATE | LIBELLÉ | MONTANT | CATÉGORIE</code><br/>
-      <span style="font-size:11px;color:var(--text4)">Ex: 2026-05-25 | Salaire | 650000 | Emploi</span>
+
+    <!-- Import CSV fichier -->
+    <div style="background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.2);border-radius:14px;padding:14px;margin-bottom:16px">
+      <div style="font-size:12px;font-weight:700;color:var(--green);margin-bottom:8px">📂 Importer depuis un fichier CSV</div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:10px">Sélectionne le fichier exporté depuis Finance (Export complet)</div>
+      <label style="display:block;background:rgba(74,222,128,.15);border:1px dashed rgba(74,222,128,.4);border-radius:10px;padding:12px;text-align:center;cursor:pointer;color:var(--green);font-size:13px;font-weight:600">
+        📎 Choisir un fichier CSV
+        <input type="file" id="imp-file" accept=".csv,.txt" onchange="loadCSVFile(this)" style="display:none"/>
+      </label>
+      <div id="imp-file-status" style="font-size:11px;color:var(--text3);margin-top:8px;text-align:center"></div>
     </div>
+
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+      <div style="flex:1;height:1px;background:var(--border)"></div>
+      <div style="font-size:11px;color:var(--text3)">OU SAISIE MANUELLE</div>
+      <div style="flex:1;height:1px;background:var(--border)"></div>
+    </div>
+
     <label class="form-label">Type d'import</label>
     <div class="sens-toggle" style="margin-bottom:14px">
       <button class="sens-btn active-credit" id="imp-rev" onclick="setImportType('revenu')" style="font-size:12px">↑ Revenus</button>
@@ -1266,7 +1279,7 @@ function openImportModal() {
     <label class="form-label">Découvert initial (FCFA)</label>
     <input class="form-input" id="imp-decouvert" type="number" placeholder="Ex: -45000 si découvert, 0 sinon" />
     <label class="form-label">Opérations en lot</label>
-    <textarea id="imp-text" placeholder="2026-05-25 | Salaire mai | 650000 | Emploi" style="width:100%;height:130px;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:12px;padding:12px 14px;color:var(--text);font-size:12px;font-family:var(--mono);resize:vertical;line-height:1.6;outline:none;margin-bottom:14px"></textarea>
+    <textarea id="imp-text" placeholder="2026-05-25 | Salaire mai | 650000 | Emploi" style="width:100%;height:100px;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:12px;padding:12px 14px;color:var(--text);font-size:12px;font-family:var(--mono);resize:vertical;line-height:1.6;outline:none;margin-bottom:14px"></textarea>
     <div style="display:flex;gap:10px">
       <button onclick="document.getElementById('modal-container').innerHTML=''" style="flex:1;padding:12px;border-radius:12px;background:rgba(255,255,255,.06);border:1px solid var(--border);color:var(--text2);font-weight:600;font-size:14px">Annuler</button>
       <button onclick="confirmImport()" style="flex:1;padding:12px;border-radius:12px;background:linear-gradient(135deg,#7c3aed,#4f46e5);border:none;color:white;font-weight:700;font-size:14px">Importer</button>
@@ -1274,6 +1287,87 @@ function openImportModal() {
   overlay.appendChild(box);
   mc.appendChild(overlay);
   importType = 'revenu';
+}
+
+function loadCSVFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const status = document.getElementById('imp-file-status');
+  status.textContent = 'Lecture en cours...';
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const text = e.target.result;
+      // Remove BOM if present
+      const clean = text.replace(/^﻿/, '');
+      const lines = clean.split('\n').map(l => l.trim()).filter(Boolean);
+      if (lines.length < 2) { status.textContent = '⚠️ Fichier vide ou invalide'; return; }
+
+      // Detect separator (; or ,)
+      const sep = lines[0].includes(';') ? ';' : ',';
+      const headers = lines[0].split(sep).map(h => h.replace(/"/g,'').trim().toLowerCase());
+      const dataLines = lines.slice(1);
+
+      let rev = 0, dep = 0, ban = 0;
+
+      dataLines.forEach(line => {
+        const cols = line.split(sep).map(c => c.replace(/^"|"$/g,'').trim());
+        // Detect format: Export complet has Section column
+        const sectionIdx = headers.indexOf('section');
+        const dateIdx = headers.findIndex(h => h.includes('date'));
+        const labelIdx = headers.findIndex(h => h.includes('lib') || h.includes('type'));
+        const montantIdx = headers.findIndex(h => h.includes('montant'));
+        const catIdx = headers.findIndex(h => h.includes('cat') || h.includes('agence'));
+        const sensIdx = headers.findIndex(h => h.includes('sens'));
+        const noteIdx = headers.findIndex(h => h.includes('note'));
+
+        const date = cols[dateIdx] || today();
+        const label = cols[labelIdx] || 'Import CSV';
+        const montant = parseFloat((cols[montantIdx]||'0').replace(/\s/g,'').replace(',','.'));
+        const categorie = cols[catIdx] || 'Autre';
+        const sens = cols[sensIdx] || 'debit';
+        const note = cols[noteIdx] || '';
+
+        if (!montant || isNaN(montant)) return;
+
+        if (sectionIdx >= 0) {
+          // Export complet format
+          const section = (cols[sectionIdx]||'').toLowerCase();
+          if (section === 'banque') {
+            appData.bancaire.push({ id: uid(), type: label, montant, date, sens, agence: categorie, note });
+            ban++;
+          } else if (section === 'dépenses' || section === 'depenses') {
+            appData.depenses.push({ id: uid(), label, montant, date, categorie });
+            dep++;
+          } else if (section === 'revenus') {
+            appData.revenus.push({ id: uid(), label, montant, date, categorie });
+            rev++;
+          }
+        } else {
+          // Single section format — use selected importType
+          if (importType === 'bancaire') {
+            appData.bancaire.push({ id: uid(), type: label, montant, date, sens, agence: categorie, note });
+            ban++;
+          } else if (importType === 'depense') {
+            appData.depenses.push({ id: uid(), label, montant, date, categorie });
+            dep++;
+          } else {
+            appData.revenus.push({ id: uid(), label, montant, date, categorie });
+            rev++;
+          }
+        }
+      });
+
+      saveData();
+      renderCurrent();
+      const total = rev + dep + ban;
+      status.innerHTML = `<span style="color:var(--green);font-weight:700">✅ ${total} ligne(s) importée(s)</span><br/><span style="font-size:10px">${rev} revenus · ${dep} dépenses · ${ban} opérations banque</span>`;
+      showToast('✅ CSV importé — ' + total + ' lignes');
+    } catch(err) {
+      status.textContent = '❌ Erreur lecture : ' + err.message;
+    }
+  };
+  reader.readAsText(file, 'UTF-8');
 }
 
 let importType = 'revenu';
