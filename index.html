@@ -398,7 +398,7 @@ select option{background:var(--s1)}
 <script>
 // ============ STATE ============
 const SK='fuel_v4';
-let D={vehicles:[],entries:[],maints:[],journal:[],pin:null,budget:{},gdriveToken:null};
+let D={vehicles:[],entries:[],maints:[],journal:[],pin:"1234",budget:{},gdriveToken:null};
 let curVeh=null, curMonth=new Date().toISOString().substring(0,7), selCatVal='essence', editVehId=null;
 
 function load(){try{const s=localStorage.getItem(SK);if(s)D=JSON.parse(s);}catch(e){}
