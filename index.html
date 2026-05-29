@@ -198,20 +198,20 @@ select option{background:var(--s1)}
     <div class="pin-dot" id="pd3"></div>
   </div>
   <div class="pin-grid">
-    <button class="pin-btn" onclick="pinPress(1)">1</button>
-    <button class="pin-btn" onclick="pinPress(2)">2</button>
-    <button class="pin-btn" onclick="pinPress(3)">3</button>
-    <button class="pin-btn" onclick="pinPress(4)">4</button>
-    <button class="pin-btn" onclick="pinPress(5)">5</button>
-    <button class="pin-btn" onclick="pinPress(6)">6</button>
-    <button class="pin-btn" onclick="pinPress(7)">7</button>
-    <button class="pin-btn" onclick="pinPress(8)">8</button>
-    <button class="pin-btn" onclick="pinPress(9)">9</button>
+    <button class="pin-btn" data-pin="1">1</button>
+    <button class="pin-btn" data-pin="2">2</button>
+    <button class="pin-btn" data-pin="3">3</button>
+    <button class="pin-btn" data-pin="4">4</button>
+    <button class="pin-btn" data-pin="5">5</button>
+    <button class="pin-btn" data-pin="6">6</button>
+    <button class="pin-btn" data-pin="7">7</button>
+    <button class="pin-btn" data-pin="8">8</button>
+    <button class="pin-btn" data-pin="9">9</button>
     <button class="pin-btn empty"></button>
-    <button class="pin-btn" onclick="pinPress(0)">0</button>
-    <button class="pin-btn del" onclick="pinDel()">⌫</button>
+    <button class="pin-btn" data-pin="0">0</button>
+    <button class="pin-btn del" id="pin-del-btn">⌫</button>
   </div>
-  <div class="pin-forgot" id="pin-forgot" onclick="pinReset()">Réinitialiser le PIN</div>
+  <div class="pin-forgot" id="pin-forgot" id="pin-forgot">Réinitialiser le PIN</div>
 </div>
 
 <!-- ===== APP ===== -->
@@ -942,3 +942,12 @@ function showToast(msg,type=''){const t=document.createElement('div');t.classNam
 // ============ INIT ============
 if('serviceWorker' in navigator)navigator.serviceWorker.register('/suivi-carburant/sw.js').catch(()=>{});
 load();gDriveHandleToken();initPin();
+
+// PIN button listeners - attached after DOM ready
+document.querySelectorAll('[data-pin]').forEach(btn => {
+  btn.addEventListener('click', () => pinPress(btn.getAttribute('data-pin')));
+});
+const delBtn = document.getElementById('pin-del-btn');
+if(delBtn) delBtn.addEventListener('click', pinDel);
+const forgotBtn = document.getElementById('pin-forgot');
+if(forgotBtn) forgotBtn.addEventListener('click', pinReset);
