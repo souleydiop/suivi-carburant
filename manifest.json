@@ -2,24 +2,22 @@
   "id": "suivi-carburant-souleydiop-2026",
   "name": "Suivi Carburant",
   "short_name": "Carburant",
-  "description": "Application de suivi carburant pour mon vehicule. Suivez vos depenses, consommation et historique de pleins.",
+  "description": "Application de suivi carburant pour mon vehicule. Suivez vos depenses, consommation, entretiens et historique de pleins.",
   "start_url": "/suivi-carburant/index.html",
   "scope": "/suivi-carburant/",
   "display": "standalone",
   "display_override": ["tabbed", "window-controls-overlay", "standalone", "minimal-ui", "browser"],
   "orientation": "portrait",
-  "background_color": "#0a0a0f",
+  "background_color": "#080c09",
   "theme_color": "#e8a020",
   "lang": "fr",
   "dir": "ltr",
   "categories": ["utilities", "finance", "productivity"],
   "prefer_related_applications": false,
-
   "iarc_rating_id": "e84b072d-71b3-4d3e-86ae-31a8ce4e53b7",
 
   "scope_extensions": [
-    { "origin": "https://souleydiop.github.io" },
-    { "origin": "https://*.github.io" }
+    { "origin": "https://souleydiop.github.io" }
   ],
 
   "file_handlers": [
@@ -60,7 +58,7 @@
   },
 
   "note_taking": {
-    "new_note_url": "/suivi-carburant/index.html#nouveau"
+    "new_note_url": "/suivi-carburant/index.html#journal"
   },
 
   "handle_links": "preferred",
@@ -89,10 +87,17 @@
       "icons": [{ "src": "icon-192.png", "sizes": "192x192", "type": "image/png" }]
     },
     {
-      "name": "Statistiques",
-      "short_name": "Stats",
-      "description": "Voir les statistiques de consommation",
-      "url": "/suivi-carburant/index.html#stats",
+      "name": "Entretiens",
+      "short_name": "Entretien",
+      "description": "Suivi des entretiens et vidanges",
+      "url": "/suivi-carburant/index.html#maint",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Journal",
+      "short_name": "Journal",
+      "description": "Journal des depenses et notes",
+      "url": "/suivi-carburant/index.html#journal",
       "icons": [{ "src": "icon-192.png", "sizes": "192x192", "type": "image/png" }]
     }
   ],
@@ -101,7 +106,7 @@
     {
       "name": "Suivi Carburant",
       "short_name": "Carburant",
-      "description": "Affiche le total depense et la consommation moyenne",
+      "description": "Affiche le solde et la consommation moyenne",
       "tag": "fuel-widget",
       "ms_ac_template": "widget/ac-template.json",
       "data": "widget/data.json",
