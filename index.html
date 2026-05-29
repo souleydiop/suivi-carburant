@@ -421,7 +421,7 @@ function initPin(){
 }
 function pinPress(n){
   if(pinBuffer.length>=4)return;
-  pinBuffer+=n;
+  pinBuffer+=String(n);
   updateDots();
   if(pinBuffer.length===4) setTimeout(()=>pinCheck(),150);
 }
@@ -434,7 +434,7 @@ function updateDots(err=false){
 }
 function pinCheck(){
   if(pinMode==='setup'){D.pin=pinBuffer;persist();unlockApp();return;}
-  if(pinBuffer===D.pin){unlockApp();}
+  if(pinBuffer===String(D.pin)){unlockApp();}
   else{pinBuffer='';updateDots(true);document.getElementById('pin-dots').classList.add('shake');setTimeout(()=>{document.getElementById('pin-dots').classList.remove('shake');updateDots();},500);}
 }
 function unlockApp(){document.getElementById('pin-screen').style.display='none';document.getElementById('app').style.display='block';document.getElementById('fab').style.display='flex';}
