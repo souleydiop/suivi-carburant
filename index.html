@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-title" content="Suivi Carburant"/>
 <meta name="application-name" content="Suivi Carburant"/>
-<link rel="manifest" href="manifest.json"/>
+<link rel="manifest" href="/suivi-carburant/manifest.json"/>
 <link rel="icon" href="icon-192.png"/>
 <title>Suivi Carburant</title>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
@@ -438,7 +438,7 @@ function pinCheck(){
   else{pinBuffer='';updateDots(true);document.getElementById('pin-dots').classList.add('shake');setTimeout(()=>{document.getElementById('pin-dots').classList.remove('shake');updateDots();},500);}
 }
 function unlockApp(){document.getElementById('pin-screen').style.display='none';document.getElementById('app').style.display='block';document.getElementById('fab').style.display='flex';}
-function pinReset(){if(confirm('Réinitialiser le PIN ? Toutes les données resteront.')){{D.pin=null;persist();pinBuffer='';pinMode='setup';initPin();updateDots();}}}
+function pinReset(){if(confirm("Reinitialiser le PIN ? Toutes les donnees resteront.")){D.pin=null;persist();pinBuffer="";pinMode="setup";initPin();updateDots();}}
 
 // ============ VEHICLE BAR ============
 function renderVBar(){
@@ -940,5 +940,5 @@ function renderAll(){renderDashboard();renderHistory();renderStats();renderMaint
 function showToast(msg,type=''){const t=document.createElement('div');t.className='toast'+(type?' '+type:'');t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),2400);}
 
 // ============ INIT ============
-if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
+if('serviceWorker' in navigator)navigator.serviceWorker.register('/suivi-carburant/sw.js').catch(()=>{});
 load();gDriveHandleToken();initPin();
