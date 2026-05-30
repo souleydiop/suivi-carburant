@@ -200,6 +200,8 @@ select option{background:var(--s1)}
     <button class="tab" onclick="showTab('history')">Historique</button>
     <button class="tab" onclick="showTab('stats')">Stats</button>
     <button class="tab" onclick="showTab('maint')">Entretien</button>
+    <button class="tab" onclick="showTab('gps')">📍 GPS</button>
+    <button class="tab" onclick="showTab('assurance')">🛡 Assur.</button>
     <button class="tab" onclick="showTab('journal')">Journal</button>
   </div>
 
@@ -207,6 +209,8 @@ select option{background:var(--s1)}
   <div id="tab-history" style="display:none"></div>
   <div id="tab-stats" style="display:none"></div>
   <div id="tab-maint" style="display:none"></div>
+  <div id="tab-gps" style="display:none"></div>
+  <div id="tab-assurance" style="display:none"></div>
   <div id="tab-journal" style="display:none"></div>
 </div>
 
@@ -289,6 +293,10 @@ select option{background:var(--s1)}
       <button class="btn-g" style="flex:1" onclick="exportPDF()">📑 PDF</button>
     </div>
     <div class="fg"><label>Importer CSV</label><input type="file" id="s-csv" accept=".csv" onchange="importCSV(this)"/></div>
+    <div class="divider"></div>
+    <div class="card-lbl" style="margin:10px 0 8px;font-size:10px;color:var(--txt3);letter-spacing:.1em;text-transform:uppercase">Alertes & Notifications</div>
+    <button class="btn-g" style="width:100%;margin-bottom:10px" onclick="requestNotifPermission()">🔔 Activer les notifications</button>
+    <button class="btn-g" style="width:100%;margin-bottom:10px" onclick="checkAndNotify()">⚡ Verifier entretiens maintenant</button>
     <div class="btn-row" style="margin-top:12px">
       <button class="btn-p" onclick="closeOvl('settings-overlay')">Fermer</button>
     </div>
@@ -303,8 +311,11 @@ select option{background:var(--s1)}
       <select id="m-type">
         <option value="vidange">Vidange</option>
         <option value="visite">Visite technique</option>
-        <option value="assurance">Assurance</option>
+        <option value="assurance">Assurance auto</option>
+        <option value="assurance_moto">Assurance moto</option>
         <option value="pneu">Pneus</option>
+        <option value="batterie">Batterie</option>
+        <option value="freins">Freins</option>
         <option value="autre">Autre entretien</option>
       </select>
     </div>
@@ -325,6 +336,24 @@ select option{background:var(--s1)}
   </div>
 </div>
 
+<!-- ASSURANCE FORM -->
+<div class="overlay" id="assurance-overlay">
+  <div class="fwrap">
+    <div class="ftitle">Assurance auto</div>
+    <div class="fg"><label>Assureur</label><input type="text" id="a-compagnie" placeholder="NSIA, Allianz, Saham, AXA..."/></div>
+    <div class="fg"><label>N° Police</label><input type="text" id="a-police" placeholder="ex: POL-2024-001234"/></div>
+    <div class="frow">
+      <div class="fg"><label>Valable du</label><input type="date" id="a-debut"/></div>
+      <div class="fg"><label>Au</label><input type="date" id="a-fin"/></div>
+    </div>
+    <div class="fg"><label>N° Attestation</label><input type="text" id="a-attestation" placeholder="ex: ATT-2024-5678"/></div>
+    <div class="btn-row">
+      <button class="btn-g" onclick="closeOvl('assurance-overlay')">Annuler</button>
+      <button class="btn-p" onclick="window.saveAssurance()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
 <!-- JOURNAL FORM -->
 <div class="overlay" id="journal-overlay">
   <div class="fwrap">
@@ -340,7 +369,6 @@ select option{background:var(--s1)}
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
 // ===== DATA =====
 const SK='fuel_v5';
 let D={vehicles:[],entries:[],maints:[],journal:[],gdriveToken:null};
@@ -368,7 +396,7 @@ function getConsos(ents){
 // ===== VEHICLE BAR =====
 function renderVBar(){
   document.getElementById('vbar').innerHTML=D.vehicles.map(v=>`
-    <div class="vchip${v.id===curVeh?' active':''}" onclick="selVeh(${v.id})">${v.name}${v.brand?' · '+v.brand:''}</div>`).join('');
+    <div class="vchip${v.id===curVeh?' active':''}" onclick="window.selVeh(${v.id})">${v.name}${v.brand?' · '+v.brand:''}</div>`).join('');
   const v=cv();
   document.getElementById('veh-title').textContent=v?v.name+(v.plate?' — '+v.plate:''):'Mon Vehicule';
 }
@@ -415,6 +443,12 @@ function renderAlerts(){
   const consos=getConsos(ents);
   if(consos.length>0){const avg=consos.slice(-3).reduce((s,c)=>s+c.conso,0)/Math.min(3,consos.length);
     if(avg>12)alerts.push({type:'warn',icon:'⛽',msg:`Conso elevee : ${avg.toFixed(1)} L/100km`});}
+  // Check assurance expiry
+  (D.assurances||[]).filter(a=>a.vehId===curVeh&&a.dateFin).forEach(a=>{
+    const diff=(new Date(a.dateFin)-new Date())/864e5;
+    if(diff<0)alerts.push({type:'danger',icon:'🛡',msg:`Assurance ${a.compagnie} expiree !`});
+    else if(diff<=30)alerts.push({type:'warn',icon:'🛡',msg:`Assurance ${a.compagnie} expire dans ${Math.round(diff)} jours`});
+  });
   document.getElementById('alerts-zone').innerHTML=alerts.slice(0,3)
     .map(a=>`<div class="alert ${a.type}"><span class="alert-icon">${a.icon}</span><span>${a.msg}</span></div>`).join('');
 }
@@ -518,7 +552,7 @@ function renderHistory(){
           <div class="eamt">${fN(Math.round(e.total))}</div>
           <div class="eamt-unit">FCFA</div>
         </div>
-        <button class="edel" onclick="delEntry(${e.id})">🗑</button>
+        <button class="edel" onclick="window.delEntry(${e.id})">🗑</button>
       </div>`;
     });
   });
@@ -565,14 +599,14 @@ function renderStats(){
 }
 
 // ===== MAINTENANCE =====
-const ML={vidange:'🔧 Vidange',visite:'🔍 Visite technique',assurance:'🛡 Assurance',pneu:'🔵 Pneus',autre:'📌 Entretien'};
+const ML={vidange:'🔧 Vidange',visite:'🔍 Visite technique',assurance:'🛡 Assurance auto',assurance_moto:'🛡 Assurance moto',pneu:'🔵 Pneus',batterie:'🔋 Batterie',freins:'🔴 Freins',autre:'📌 Entretien'};
 function renderMaint(){
   const maints=D.maints.filter(m=>m.vehId===curVeh).sort((a,b)=>new Date(b.lastDate)-new Date(a.lastDate));
   const today=new Date().toISOString().split('T')[0];
   const lastKm=cE().length?Math.max(...cE().map(e=>e.km)):0;
   let html=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
     <span style="font-size:13px;font-weight:600">Entretiens & Suivi</span>
-    <button class="hbtn acc" onclick="openMaintForm()">+ Ajouter</button>
+    <button class="hbtn acc" onclick="window.openMaintForm()">+ Ajouter</button>
   </div>`;
   if(!maints.length){html+='<div class="empty"><div class="empty-icon">🔧</div><div>Aucun entretien enregistre</div></div>';
     document.getElementById('tab-maint').innerHTML=html;return;}
@@ -596,7 +630,7 @@ function renderMaint(){
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
         <span class="ms ms-${st}">${sl}</span>
-        <button class="edel" onclick="delMaint(${m.id})">🗑</button>
+        <button class="edel" onclick="window.delMaint(${m.id})">🗑</button>
       </div>
     </div>`;
   });
@@ -610,7 +644,7 @@ function renderJournal(){
   ents.forEach(e=>{const y=e.date.substring(0,4);byYear[y]=(byYear[y]||0)+e.total;});
   let html=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
     <span style="font-size:13px;font-weight:600">Journal</span>
-    <button class="hbtn acc" onclick="openJournalForm()">+ Note</button>
+    <button class="hbtn acc" onclick="window.openJournalForm()">+ Note</button>
   </div>`;
   if(Object.keys(byYear).length>0){
     html+=`<div class="card" style="margin-bottom:12px"><div class="card-lbl">Depenses cumulees par annee</div>`;
@@ -624,7 +658,7 @@ function renderJournal(){
     document.getElementById('tab-journal').innerHTML=html;return;}
   jents.forEach(j=>{
     html+=`<div class="je">
-      <div class="je-header"><span>${fD(j.date)}</span><button class="edel" onclick="delJournal(${j.id})">🗑</button></div>
+      <div class="je-header"><span>${fD(j.date)}</span><button class="edel" onclick="window.delJournal(${j.id})">🗑</button></div>
       <div class="je-title">${j.title}</div>
       ${j.body?`<div class="je-body">${j.body}</div>`:''}
     </div>`;
@@ -742,7 +776,7 @@ function exportCSV(){
   const ents=cE().sort((a,b)=>new Date(a.date)-new Date(b.date));
   if(!ents.length){showToast('Aucune donnee','err');return;}
   let csv='Date,Km,Litres,Prix/L,Total,Carburant,Station,Note\n';
-  ents.forEach(e=>{csv+=`${e.date},${e.km},${e.liters},${e.pricePerLiter},${Math.round(e.total)},${e.fuelType},${e.station||''},${e.note||''}\n`;});
+  ents.forEach(e=>{csv+=`${e.date},${e.km},${e.liters},${e.pricePerLiter},${Math.round(e.total)},${e.fuelType},${e.station||''},${e.note||''}\n`;});;
   dl(new Blob([csv],{type:'text/csv;charset=utf-8;'}),`carburant_${cv().name}_${new Date().toISOString().split('T')[0]}.csv`);
   showToast('CSV exporte !');
 }
@@ -819,15 +853,189 @@ async function gDriveRestore(){
   }catch(e){showToast('Erreur reseau','err');}
 }
 
+// ===== ASSURANCE AUTO =====
+function renderAssurance(){
+  const assurances=(D.assurances||[]).filter(a=>a.vehId===curVeh).sort((a,b)=>new Date(b.dateDebut)-new Date(a.dateDebut));
+  let html=`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <span style="font-size:13px;font-weight:600">Assurance auto</span>
+      <button class="hbtn acc" onclick="window.openAssuranceForm()">+ Ajouter</button>
+    </div>`;
+
+  if(!assurances.length){
+    html+='<div class="empty"><div class="empty-icon">🛡</div><div>Aucune assurance enregistree</div></div>';
+  } else {
+    assurances.forEach(a=>{
+      const diff=a.dateFin?(new Date(a.dateFin)-new Date())/864e5:null;
+      let sl='En cours',sc='ms-ok';
+      if(diff!==null){
+        if(diff<0){sl='EXPIREE';sc='ms-due';}
+        else if(diff<=30){sl=Math.round(diff)+' jours';sc='ms-warn';}
+      }
+      html+=`<div class="card" style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <div style="font-size:15px;font-weight:700">🛡 ${a.compagnie}</div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <span class="ms ${sc}">${sl}</span>
+            <button class="edel" onclick="window.delAssurance(${a.id})">🗑</button>
+          </div>
+        </div>
+        <div class="srow"><span>N Police</span><span class="mono" style="color:var(--acc)">${a.police||'--'}</span></div>
+        <div class="srow"><span>Valable du</span><span class="mono">${a.dateDebut?fD(a.dateDebut):'--'}</span></div>
+        <div class="srow"><span>Au</span><span class="mono" style="color:${diff!==null&&diff<0?'var(--red)':diff!==null&&diff<=30?'#f5a623':'var(--txt)'}">${a.dateFin?fD(a.dateFin):'--'}</span></div>
+        <div class="srow"><span>N Attestation</span><span class="mono">${a.attestation||'--'}</span></div>
+      </div>`;
+    });
+  }
+  document.getElementById('tab-assurance').innerHTML=html;
+}
+
+function openAssuranceForm(){
+  ['a-compagnie','a-police','a-attestation'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('a-debut').value=new Date().toISOString().split('T')[0];
+  document.getElementById('a-fin').value='';
+  document.getElementById('assurance-overlay').classList.add('open');
+}
+function saveAssurance(){
+  const comp=document.getElementById('a-compagnie').value.trim();
+  if(!comp){showToast("Remplis nom assureur","err");return;}
+  if(!D.assurances)D.assurances=[];
+  D.assurances.push({
+    id:Date.now(),vehId:curVeh,
+    compagnie:comp,
+    police:document.getElementById('a-police').value,
+    dateDebut:document.getElementById('a-debut').value,
+    dateFin:document.getElementById('a-fin').value,
+    attestation:document.getElementById('a-attestation').value
+  });
+  persist();closeOvl('assurance-overlay');showToast('Assurance enregistree !');renderAssurance();
+}
+function delAssurance(id){
+  if(!confirm('Supprimer cette assurance ?'))return;
+  D.assurances=D.assurances.filter(a=>a.id!==id);persist();renderAssurance();
+}
+function addSinistre(){}
+function delSinistre(){}
+
+// ===== GPS STATIONS =====
+function renderGPS(){
+  const el=document.getElementById('tab-gps');
+  el.innerHTML=`
+    <div class="card" style="margin-bottom:10px">
+      <div class="card-lbl">Stations carburant proches</div>
+      <div id="gps-map-wrap" style="border-radius:10px;overflow:hidden;margin-bottom:10px;background:var(--s2);height:260px;display:flex;align-items:center;justify-content:center">
+        <div style="text-align:center;padding:30px;color:var(--txt3)">
+          <div style="font-size:40px;margin-bottom:10px">📍</div>
+          <div style="font-size:12px">Appuyez pour localiser</div>
+        </div>
+      </div>
+      <div id="gps-result"></div>
+      <button class="btn-p" style="width:100%;margin-top:10px" onclick="findStations()">📍 Trouver les stations proches</button>
+    </div>
+  `;
+}
+
+function findStations(){
+  const res=document.getElementById('gps-result');
+  const wrap=document.getElementById('gps-map-wrap');
+  res.innerHTML='<div style="color:var(--txt2);font-size:12px;text-align:center;padding:8px">⏳ Localisation en cours...</div>';
+  if(!navigator.geolocation){res.innerHTML='<div style="color:var(--red);font-size:12px">GPS non disponible</div>';return;}
+  navigator.geolocation.getCurrentPosition(pos=>{
+    const lat=pos.coords.latitude,lng=pos.coords.longitude;
+    // Show OSM map
+    wrap.innerHTML=`<iframe
+      src="https://www.openstreetmap.org/export/embed.html?bbox=${lng-0.04},${lat-0.04},${lng+0.04},${lat+0.04}&layer=mapnik&marker=${lat},${lng}"
+      style="width:100%;height:260px;border:none" loading="lazy"></iframe>`;
+    // Links to all station types
+    res.innerHTML=`
+      <div style="font-size:11px;color:#7dca7d;margin-bottom:10px">✅ Position detectee — ${lat.toFixed(5)}, ${lng.toFixed(5)}</div>
+      <a href="https://www.google.com/maps/search/station+service/@${lat},${lng},15z" target="_blank"
+        style="display:flex;align-items:center;gap:10px;background:var(--s2);border:1px solid var(--bdr);border-radius:10px;padding:12px;margin-bottom:8px;text-decoration:none">
+        <span style="font-size:24px">⛽</span>
+        <div><div style="font-size:13px;font-weight:700;color:var(--txt)">Toutes les stations</div>
+        <div style="font-size:11px;color:var(--txt3)">Google Maps — stations autour de vous</div></div>
+      </a>
+      <a href="https://www.google.com/maps/search/Total+Energies/@${lat},${lng},15z" target="_blank"
+        style="display:flex;align-items:center;gap:10px;background:var(--s2);border:1px solid var(--bdr);border-radius:10px;padding:12px;margin-bottom:8px;text-decoration:none">
+        <span style="font-size:24px">🔴</span>
+        <div><div style="font-size:13px;font-weight:700;color:var(--txt)">Total Energies</div>
+        <div style="font-size:11px;color:var(--txt3)">Stations Total proches</div></div>
+      </a>
+      <a href="https://www.google.com/maps/search/Shell+station/@${lat},${lng},15z" target="_blank"
+        style="display:flex;align-items:center;gap:10px;background:var(--s2);border:1px solid var(--bdr);border-radius:10px;padding:12px;margin-bottom:8px;text-decoration:none">
+        <span style="font-size:24px">🟡</span>
+        <div><div style="font-size:13px;font-weight:700;color:var(--txt)">Shell</div>
+        <div style="font-size:11px;color:var(--txt3)">Stations Shell proches</div></div>
+      </a>
+      <a href="https://www.google.com/maps/search/Elton+station/@${lat},${lng},15z" target="_blank"
+        style="display:flex;align-items:center;gap:10px;background:var(--s2);border:1px solid var(--bdr);border-radius:10px;padding:12px;margin-bottom:8px;text-decoration:none">
+        <span style="font-size:24px">🔵</span>
+        <div><div style="font-size:13px;font-weight:700;color:var(--txt)">Elton</div>
+        <div style="font-size:11px;color:var(--txt3)">Stations Elton proches</div></div>
+      </a>
+      <a href="https://www.google.com/maps/search/Oilibya+station/@${lat},${lng},15z" target="_blank"
+        style="display:flex;align-items:center;gap:10px;background:var(--s2);border:1px solid var(--bdr);border-radius:10px;padding:12px;text-decoration:none">
+        <span style="font-size:24px">🟢</span>
+        <div><div style="font-size:13px;font-weight:700;color:var(--txt)">Oilibya</div>
+        <div style="font-size:11px;color:var(--txt3)">Stations Oilibya proches</div></div>
+      </a>`;
+    D.lastPos={lat,lng,ts:Date.now()};persist();
+  },err=>{
+    res.innerHTML=`<div style="color:var(--red);font-size:12px">
+      ${err.code===1?'Permission GPS refusee — activez le GPS dans les parametres':err.message}<br><br>
+      <a href="https://www.google.com/maps/search/station+carburant+Senegal" target="_blank" style="color:var(--acc)">
+        🗺 Rechercher manuellement sur Maps
+      </a></div>`;
+  },{enableHighAccuracy:true,timeout:15000,maximumAge:60000});
+}
+
+// ===== NOTIFICATIONS =====
+function requestNotifPermission(){
+  try{
+    if(!('Notification' in window)){showToast('Notifications non supportees','err');return;}
+    Notification.requestPermission().then(p=>{
+      D.notifPermission=p;persist();
+      if(p==='granted'){showToast('Notifications activees !');scheduleNotifications();}
+      else showToast('Notifications refusees','err');
+    });
+  }catch(e){showToast('Notifications non supportees','err');}
+}
+
+function scheduleNotifications(){
+  try{
+    if(!('Notification' in window)||Notification.permission!=='granted')return;
+    const today=new Date().toISOString().split('T')[0];
+    D.maints.filter(m=>m.vehId===curVeh).forEach(m=>{
+      if(m.nextDate){
+        const diff=(new Date(m.nextDate)-new Date())/864e5;
+        const label=(ML[m.type]||'Entretien').replace(/^\S+ /,'');
+        if(diff<=30&&diff>=0){
+          new Notification('Suivi Carburant',{body:label+' dans '+Math.round(diff)+' jours',icon:'/suivi-carburant/icon-192.png'});
+        } else if(diff<0){
+          new Notification('Suivi Carburant',{body:label+' : echeance depassee !',icon:'/suivi-carburant/icon-192.png'});
+        }
+      }
+    });
+  }catch(e){}
+}
+
+function checkAndNotify(){
+  try{
+    if(!('Notification' in window))return;
+    if(Notification.permission==='granted') scheduleNotifications();
+    else if(Notification.permission==='default') requestNotifPermission();
+  }catch(e){}
+}
+
 // ===== TABS =====
 function showTab(t){
-  ['dashboard','history','stats','maint','journal'].forEach((id,i)=>{
+  ['dashboard','history','stats','maint','gps','assurance','journal'].forEach((id,i)=>{
     document.getElementById('tab-'+id).style.display=id===t?'block':'none';
     document.querySelectorAll('.tab')[i].classList.toggle('active',id===t);
   });
   renderAll();
 }
-function renderAll(){renderDashboard();renderHistory();renderStats();renderMaint();renderJournal();}
+function renderAll(){renderDashboard();renderHistory();renderStats();renderMaint();renderGPS();renderAssurance();renderJournal();}
 function showToast(msg,type){
   const t=document.createElement('div');t.className='toast'+(type?' '+type:'');
   t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),2400);
@@ -835,36 +1043,7 @@ function showToast(msg,type){
 
 // ===== INIT =====
 if('serviceWorker' in navigator)navigator.serviceWorker.register('/suivi-carburant/sw.js').catch(()=>{});
-load();gDriveHandleToken();renderVBar();renderAll();
-
-// Expose all functions globally for onclick handlers
-window.showTab=showTab;
-window.openEntryForm=openEntryForm;
-window.openVehForm=openVehForm;
-window.openSettings=openSettings;
-window.selVeh=selVeh;
-window.selCat=selCat;
-window.updPrev=updPrev;
-window.saveEntry=saveEntry;
-window.delEntry=delEntry;
-window.saveVeh=saveVeh;
-window.delVeh=delVeh;
-window.openMaintForm=openMaintForm;
-window.saveMaint=saveMaint;
-window.delMaint=delMaint;
-window.openJournalForm=openJournalForm;
-window.saveJournal=saveJournal;
-window.delJournal=delJournal;
-window.closeOvl=closeOvl;
-window.exportCSV=exportCSV;
-window.exportPDF=exportPDF;
-window.importCSV=importCSV;
-window.gDriveAuth=gDriveAuth;
-window.gDriveSync=gDriveSync;
-window.gDriveRestore=gDriveRestore;
-window.prevMonth=prevMonth;
-window.nextMonth=nextMonth;
-}); // end DOMContentLoaded
+load();gDriveHandleToken();renderVBar();renderAll();setTimeout(checkAndNotify,2000);
 </script>
 </body>
 </html>
