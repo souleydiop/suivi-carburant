@@ -1,7 +1,8 @@
-const CACHE = 'fuel-cache-v6';
+const CACHE = 'fuel-cache-v7';
 const ASSETS = [
   '/suivi-carburant/',
   '/suivi-carburant/index.html',
+  '/suivi-carburant/logic.js',
   '/suivi-carburant/manifest.json',
   '/suivi-carburant/icon-192.png',
   '/suivi-carburant/icon-512.png',
