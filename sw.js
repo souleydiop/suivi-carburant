@@ -1,4 +1,4 @@
-const CACHE = 'fuel-cache-v4';
+const CACHE = 'fuel-cache-v6';
 const ASSETS = [
   '/suivi-carburant/',
   '/suivi-carburant/index.html',

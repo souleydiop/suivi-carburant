@@ -219,7 +219,7 @@ select option{background:var(--s1)}
 <!-- ENTRY FORM -->
 <div class="overlay" id="entry-overlay">
   <div class="fwrap">
-    <div class="ftitle">Nouveau plein</div>
+    <div class="ftitle">Nouveau</div>
     <div class="cat-grid" id="fuel-cats">
       <button class="cat-btn sel" data-cat="essence" onclick="selCat('essence')"><span class="ci">⛽</span>Essence</button>
       <button class="cat-btn" data-cat="diesel" onclick="selCat('diesel')"><span class="ci">🛢</span>Diesel</button>
@@ -237,7 +237,11 @@ select option{background:var(--s1)}
       <div class="fg"><label>Prix/L (FCFA)</label><input type="number" id="f-price" placeholder="755" class="mono" oninput="updPrev()"/></div>
     </div>
     <div class="fg"><label>Station (optionnel)</label><input type="text" id="f-station" placeholder="Total Dakar"/></div>
-    <div class="fg"><label>Note (optionnel)</label><input type="text" id="f-note" placeholder="Plein complet..."/></div>
+    <div class="fg"><label>Note (optionnel)</label><input type="text" id="f-note" placeholder="Remarque..."/></div>
+    <div class="fg" style="display:flex;align-items:center;gap:8px;background:var(--s2);border:1px solid var(--bdr);border-radius:9px;padding:10px 12px">
+      <input type="checkbox" id="f-full" checked style="width:16px;height:16px;accent-color:var(--acc);flex-shrink:0"/>
+      <label for="f-full" style="margin:0;font-size:12px;color:var(--txt);text-transform:none;letter-spacing:0;font-weight:400">Plein complet (necessaire pour un calcul de conso fiable)</label>
+    </div>
     <div id="f-prev" style="display:none;background:var(--s2);border-radius:8px;padding:9px 12px;margin-bottom:11px;justify-content:space-between;font-size:12px">
       <span style="color:var(--txt2)">Total estimé</span>
       <span class="mono" style="color:var(--acc);font-weight:700" id="f-prev-val"></span>
@@ -329,6 +333,8 @@ select option{background:var(--s1)}
     </div>
     <div class="fg"><label>Cout (FCFA)</label><input type="number" id="m-cost" placeholder="25000" class="mono"/></div>
     <div class="fg"><label>Note</label><input type="text" id="m-note" placeholder="Garage, type huile..."/></div>
+    <div class="fg"><label>Photo du ticket (optionnel)</label><input type="file" id="m-photo" accept="image/*" capture="environment"/></div>
+    <div id="m-photo-existing" style="display:none;font-size:11px;color:var(--txt2);margin-bottom:8px">📷 Une photo est deja jointe — en reprendre une la remplacera</div>
     <div class="btn-row">
       <button class="btn-g" onclick="closeOvl('maint-overlay')">Annuler</button>
       <button class="btn-p" onclick="saveMaint()">Enregistrer</button>
@@ -347,6 +353,8 @@ select option{background:var(--s1)}
       <div class="fg"><label>Au</label><input type="date" id="a-fin"/></div>
     </div>
     <div class="fg"><label>N° Attestation</label><input type="text" id="a-attestation" placeholder="ex: ATT-2024-5678"/></div>
+    <div class="fg"><label>Importer le PDF de l'assurance (optionnel)</label><input type="file" id="a-pdf" accept="application/pdf"/></div>
+    <div id="a-pdf-existing" style="display:none;font-size:11px;color:var(--txt2);margin-bottom:8px">📄 Un PDF est deja joint — choisir un fichier le remplacera</div>
     <div class="btn-row">
       <button class="btn-g" onclick="closeOvl('assurance-overlay')">Annuler</button>
       <button class="btn-p" onclick="window.saveAssurance()">Enregistrer</button>
@@ -386,10 +394,25 @@ function fN(n){return Math.abs(n).toLocaleString('fr-FR');}
 function fD(d){return new Date(d).toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'});}
 function cv(){return D.vehicles.find(v=>v.id===curVeh)||D.vehicles[0];}
 function cE(){return D.entries.filter(e=>e.vehId===curVeh);}
+// Methode plein-a-plein : la conso entre 2 pleins complets tient compte
+// de tous les litres ajoutes entre-temps (y compris les pleins partiels),
+// ce qui est bien plus fiable que de comparer 2 entrees consecutives.
 function getConsos(ents){
   const s=[...ents].sort((a,b)=>new Date(a.date)-new Date(b.date));
   const r=[];
-  for(let i=1;i<s.length;i++){const p=s[i-1],c=s[i],d=c.km-p.km;if(d>0)r.push({...c,dist:d,conso:(c.liters/d)*100});}
+  let acc=0,lastFull=null;
+  for(let i=0;i<s.length;i++){
+    const e=s[i];
+    acc+=e.liters;
+    const isFull=e.full!==false; // entrees existantes sans champ 'full' = considerees pleines
+    if(isFull){
+      if(lastFull){
+        const dist=e.km-lastFull.km;
+        if(dist>0)r.push({...e,dist,conso:(acc/dist)*100});
+      }
+      lastFull=e;acc=0;
+    }
+  }
   return r;
 }
 
@@ -398,7 +421,7 @@ function renderVBar(){
   document.getElementById('vbar').innerHTML=D.vehicles.map(v=>`
     <div class="vchip${v.id===curVeh?' active':''}" onclick="window.selVeh(${v.id})">${v.name}${v.brand?' · '+v.brand:''}</div>`).join('');
   const v=cv();
-  document.getElementById('veh-title').textContent=v?v.name+(v.plate?' — '+v.plate:''):'Mon Vehicule';
+  document.getElementById('veh-title').textContent=v?(v.plate||v.name):'Mon Vehicule';
 }
 function selVeh(id){curVeh=id;renderVBar();renderAll();}
 
@@ -511,7 +534,7 @@ function renderDashboard(){
 // ===== HISTORY =====
 function renderHistory(){
   const ents=cE().filter(e=>e.date.startsWith(curMonth)).sort((a,b)=>new Date(b.date)-new Date(a.date));
-  const all=cE().sort((a,b)=>new Date(a.date)-new Date(b.date));
+  const consos=getConsos(cE());
   const[yr,mo]=curMonth.split('-').map(Number);
   const moLbl=new Date(yr,mo-1,1).toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
   const mT=ents.reduce((s,e)=>s+e.total,0);
@@ -536,16 +559,16 @@ function renderHistory(){
   Object.keys(groups).sort((a,b)=>new Date(b)-new Date(a)).forEach(date=>{
     html+=`<div class="tx-glbl">${fD(date)}</div>`;
     groups[date].forEach(e=>{
-      const idx=all.findIndex(x=>x.id===e.id);
-      let ch='';
-      if(idx>0){const p=all[idx-1],d=e.km-p.km;if(d>0){const c=(e.liters/d*100).toFixed(1);ch=`<span class="badge ${c>10?'b-bad':'b-ok'}">${c} L/100</span>`;}}
+      const cItem=consos.find(c=>c.id===e.id);
+      let ch=cItem?`<span class="badge ${cItem.conso>10?'b-bad':'b-ok'}">${cItem.conso.toFixed(1)} L/100</span>`:'';
+      const fullBadge=e.full===false?'<span class="badge b-st">Partiel</span>':'';
       html+=`<div class="entry">
         <div class="eicon">⛽</div>
         <div class="einfo">
           <div class="elabel">${e.note||e.fuelType||'Plein'}</div>
           <div class="esub">${fN(e.km)} km · ${e.liters} L · ${fN(e.pricePerLiter)} F/L${e.station?' · '+e.station:''}</div>
           <div style="margin-top:4px;display:flex;gap:4px;flex-wrap:wrap">
-            <span class="badge b-fuel">${e.fuelType}</span>${ch}
+            <span class="badge b-fuel">${e.fuelType}</span>${ch}${fullBadge}
           </div>
         </div>
         <div>
@@ -619,7 +642,7 @@ function renderMaint(){
     const icon=ML[m.type]?.split(' ')[0]||'🔧';
     const lbl=ML[m.type]?.substring(2)||m.type;
     html+=`<div class="maint-card">
-      <div class="maint-icon">${icon}</div>
+      ${m.photoData?`<img src="${m.photoData}" onclick="window.viewMaintPhoto(${m.id})" style="width:40px;height:40px;border-radius:10px;object-fit:cover;flex-shrink:0;cursor:pointer"/>`:`<div class="maint-icon">${icon}</div>`}
       <div class="maint-info">
         <div class="maint-title">${lbl}</div>
         <div class="maint-sub">Dernier : ${m.lastDate?fD(m.lastDate):'--'}${m.lastKm?' · '+fN(m.lastKm)+' km':''}</div>
@@ -627,6 +650,7 @@ function renderMaint(){
         ${m.nextKm?`<div class="maint-sub">Prochain km : ${fN(m.nextKm)}</div>`:''}
         ${m.cost?`<div class="maint-sub">Cout : ${fN(m.cost)} FCFA</div>`:''}
         ${m.note?`<div class="maint-sub">${m.note}</div>`:''}
+        ${m.photoData?`<div class="maint-sub" style="cursor:pointer;color:var(--acc)" onclick="window.viewMaintPhoto(${m.id})">📷 Voir le ticket</div>`:''}
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
         <span class="ms ms-${st}">${sl}</span>
@@ -682,6 +706,7 @@ function openEntryForm(){
   document.getElementById('f-date').value=new Date().toISOString().split('T')[0];
   ['f-km','f-liters','f-price','f-station','f-note'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('f-prev').style.display='none';
+  document.getElementById('f-full').checked=true;
   selCat(cv()?.fuel||'essence');
   document.getElementById('entry-overlay').classList.add('open');
 }
@@ -692,7 +717,8 @@ function saveEntry(){
   const date=document.getElementById('f-date').value;
   if(!km||!liters||!price||!date){showToast('Remplis la date, km, litres et prix','err');return;}
   D.entries.push({id:Date.now(),vehId:curVeh,date,km,liters,pricePerLiter:price,total:liters*price,
-    fuelType:selCatVal,station:document.getElementById('f-station').value,note:document.getElementById('f-note').value});
+    fuelType:selCatVal,station:document.getElementById('f-station').value,note:document.getElementById('f-note').value,
+    full:document.getElementById('f-full').checked});
   persist();closeOvl('entry-overlay');showToast('Plein enregistre !');renderAll();
 }
 function delEntry(id){if(!confirm('Supprimer ce plein ?'))return;D.entries=D.entries.filter(e=>e.id!==id);persist();renderAll();}
@@ -700,7 +726,7 @@ function delEntry(id){if(!confirm('Supprimer ce plein ?'))return;D.entries=D.ent
 function openVehForm(id){
   editVehId=id||null;const v=id?D.vehicles.find(x=>x.id===id):null;
   document.getElementById('vf-title').textContent=v?'Modifier vehicule':'Ajouter vehicule';
-  document.getElementById('vf-del').style.display=v&&D.vehicles.length>1?'block':'none';
+  document.getElementById('vf-del').style.display=v?'block':'none';
   document.getElementById('v-name').value=v?.name||'';
   document.getElementById('v-brand').value=v?.brand||'';
   document.getElementById('v-model').value=v?.model||'';
@@ -722,17 +748,24 @@ function saveVeh(){
   persist();closeOvl('veh-overlay');renderVBar();renderAll();showToast('Vehicule sauvegarde !');
 }
 function delVeh(){
-  if(!editVehId||D.vehicles.length<=1){showToast('Impossible','err');return;}
+  if(!editVehId){showToast('Impossible','err');return;}
   if(!confirm('Supprimer ce vehicule et toutes ses donnees ?'))return;
   D.vehicles=D.vehicles.filter(v=>v.id!==editVehId);
   D.entries=D.entries.filter(e=>e.vehId!==editVehId);
   D.maints=D.maints.filter(m=>m.vehId!==editVehId);
-  curVeh=D.vehicles[0].id;persist();closeOvl('veh-overlay');renderVBar();renderAll();
+  D.journal=D.journal.filter(j=>j.vehId!==editVehId);
+  if(D.assurances)D.assurances=D.assurances.filter(a=>a.vehId!==editVehId);
+  if(D.vehicles.length===0){
+    D.vehicles.push({id:Date.now(),name:'Mon Vehicule',brand:'',model:'',plate:'',fuel:'essence',budget:0,conso:0});
+  }
+  curVeh=D.vehicles[0].id;persist();closeOvl('veh-overlay');renderVBar();renderAll();showToast('Vehicule supprime');
 }
 
 function openSettings(){
+  const lastB=D.lastBackupTs?new Date(D.lastBackupTs).toLocaleString('fr-FR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):null;
   document.getElementById('gdrive-status').innerHTML=D.gdriveToken?
-    '✅ Connecte — <a href="#" onclick="gDriveSync();return false" style="color:var(--acc)">Sauvegarder</a> · <a href="#" onclick="gDriveRestore();return false" style="color:var(--blu)">Restaurer</a>':
+    `✅ Connecte${lastB?' — derniere sauvegarde : '+lastB:' — aucune sauvegarde encore'}<br>
+     <a href="#" onclick="gDriveSync();return false" style="color:var(--acc)">Sauvegarder maintenant</a> · <a href="#" onclick="gDriveRestore();return false" style="color:var(--blu)">Restaurer depuis la derniere sauvegarde</a>`:
     'Non connecte';
   document.getElementById('settings-overlay').classList.add('open');
 }
@@ -740,20 +773,35 @@ function openSettings(){
 function openMaintForm(){
   document.getElementById('m-last').value=new Date().toISOString().split('T')[0];
   ['m-km','m-next-date','m-next-km','m-cost','m-note'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('m-photo').value='';
   document.getElementById('maint-overlay').classList.add('open');
 }
 function saveMaint(){
   const last=document.getElementById('m-last').value;
   if(!last){showToast('Remplis la date','err');return;}
-  D.maints.push({id:Date.now(),vehId:curVeh,type:document.getElementById('m-type').value,
+  const rec={id:Date.now(),vehId:curVeh,type:document.getElementById('m-type').value,
     lastDate:last,lastKm:parseFloat(document.getElementById('m-km').value)||0,
     nextDate:document.getElementById('m-next-date').value,
     nextKm:parseFloat(document.getElementById('m-next-km').value)||0,
     cost:parseFloat(document.getElementById('m-cost').value)||0,
-    note:document.getElementById('m-note').value});
-  persist();closeOvl('maint-overlay');showToast('Entretien enregistre !');renderMaint();
+    note:document.getElementById('m-note').value,photoData:null};
+  const file=document.getElementById('m-photo').files[0];
+  const finish=()=>{D.maints.push(rec);persist();closeOvl('maint-overlay');showToast('Entretien enregistre !');renderMaint();};
+  if(file){
+    if(file.size>4*1024*1024){showToast('Photo trop volumineuse (max 4 Mo)','err');return;}
+    const reader=new FileReader();
+    reader.onload=e=>{rec.photoData=e.target.result;finish();};
+    reader.onerror=()=>{showToast('Erreur lecture photo','err');finish();};
+    reader.readAsDataURL(file);
+  } else finish();
 }
 function delMaint(id){if(!confirm('Supprimer ?'))return;D.maints=D.maints.filter(m=>m.id!==id);persist();renderMaint();}
+function viewMaintPhoto(id){
+  const m=D.maints.find(x=>x.id===id);
+  if(!m||!m.photoData){showToast('Photo introuvable','err');return;}
+  const w=window.open('');
+  if(w)w.document.write(`<body style="margin:0;background:#000;display:flex;align-items:center;justify-content:center;min-height:100vh"><img src="${m.photoData}" style="max-width:100%;max-height:100vh"/></body>`);
+}
 
 function openJournalForm(){
   document.getElementById('j-date').value=new Date().toISOString().split('T')[0];
@@ -837,9 +885,28 @@ async function gDriveSync(){
     form.append('file',new Blob([JSON.stringify(D)],{type:'application/json'}));
     const url=fid?`https://www.googleapis.com/upload/drive/v3/files/${fid}?uploadType=multipart`:'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
     const r=await fetch(url,{method:fid?'PATCH':'POST',headers:{Authorization:'Bearer '+D.gdriveToken},body:form});
-    if(r.ok)showToast('Sauvegarde sur Google Drive !');
+    if(r.ok){D.lastBackupTs=Date.now();persist();showToast('Sauvegarde sur Google Drive !');}
     else{D.gdriveToken=null;persist();showToast('Erreur Drive — reconnectez','err');}
   }catch(e){showToast('Erreur reseau','err');}
+}
+// Sauvegarde silencieuse (pas de toast), utilisee pour la sauvegarde auto quotidienne
+async function gDriveSyncSilent(){
+  if(!D.gdriveToken)return;
+  try{
+    const s=await fetch(`https://www.googleapis.com/drive/v3/files?q=name='${GFILE}'&fields=files(id)`,{headers:{Authorization:'Bearer '+D.gdriveToken}});
+    const sd=await s.json();const fid=sd.files?.[0]?.id;
+    const form=new FormData();
+    form.append('metadata',new Blob([JSON.stringify({name:GFILE,mimeType:'application/json'})],{type:'application/json'}));
+    form.append('file',new Blob([JSON.stringify(D)],{type:'application/json'}));
+    const url=fid?`https://www.googleapis.com/upload/drive/v3/files/${fid}?uploadType=multipart`:'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
+    const r=await fetch(url,{method:fid?'PATCH':'POST',headers:{Authorization:'Bearer '+D.gdriveToken},body:form});
+    if(r.ok){D.lastBackupTs=Date.now();persist();}
+  }catch(e){}
+}
+function autoBackupCheck(){
+  if(!D.gdriveToken)return;
+  const dayMs=864e5;
+  if(!D.lastBackupTs||Date.now()-D.lastBackupTs>=dayMs)gDriveSyncSilent();
 }
 async function gDriveRestore(){
   if(!D.gdriveToken){showToast('Connectez Google Drive','err');return;}
@@ -884,6 +951,7 @@ function renderAssurance(){
         <div class="srow"><span>Valable du</span><span class="mono">${a.dateDebut?fD(a.dateDebut):'--'}</span></div>
         <div class="srow"><span>Au</span><span class="mono" style="color:${diff!==null&&diff<0?'var(--red)':diff!==null&&diff<=30?'#f5a623':'var(--txt)'}">${a.dateFin?fD(a.dateFin):'--'}</span></div>
         <div class="srow"><span>N Attestation</span><span class="mono">${a.attestation||'--'}</span></div>
+        ${a.pdfData?`<button class="btn-exp" style="width:100%;margin-top:8px" onclick="window.openAssurancePdf(${a.id})">📄 Voir le PDF joint</button>`:''}
       </div>`;
     });
   }
@@ -894,21 +962,48 @@ function openAssuranceForm(){
   ['a-compagnie','a-police','a-attestation'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('a-debut').value=new Date().toISOString().split('T')[0];
   document.getElementById('a-fin').value='';
+  document.getElementById('a-pdf').value='';
+  document.getElementById('a-pdf-existing').style.display='none';
   document.getElementById('assurance-overlay').classList.add('open');
 }
 function saveAssurance(){
   const comp=document.getElementById('a-compagnie').value.trim();
   if(!comp){showToast("Remplis nom assureur","err");return;}
-  if(!D.assurances)D.assurances=[];
-  D.assurances.push({
+  const rec={
     id:Date.now(),vehId:curVeh,
     compagnie:comp,
     police:document.getElementById('a-police').value,
     dateDebut:document.getElementById('a-debut').value,
     dateFin:document.getElementById('a-fin').value,
-    attestation:document.getElementById('a-attestation').value
-  });
-  persist();closeOvl('assurance-overlay');showToast('Assurance enregistree !');renderAssurance();
+    attestation:document.getElementById('a-attestation').value,
+    pdfData:null,pdfName:null
+  };
+  const file=document.getElementById('a-pdf').files[0];
+  const finish=()=>{
+    if(!D.assurances)D.assurances=[];
+    D.assurances.push(rec);
+    persist();closeOvl('assurance-overlay');showToast('Assurance enregistree !');renderAssurance();
+  };
+  if(file){
+    if(file.size>4*1024*1024){showToast('PDF trop volumineux (max 4 Mo)','err');return;}
+    const reader=new FileReader();
+    reader.onload=e=>{rec.pdfData=e.target.result;rec.pdfName=file.name;finish();};
+    reader.onerror=()=>{showToast('Erreur lecture PDF','err');finish();};
+    reader.readAsDataURL(file);
+  } else finish();
+}
+function openAssurancePdf(id){
+  const a=(D.assurances||[]).find(x=>x.id===id);
+  if(!a||!a.pdfData){showToast('PDF introuvable','err');return;}
+  try{
+    const b64=a.pdfData.split(',')[1];
+    const bytes=atob(b64);const arr=new Uint8Array(bytes.length);
+    for(let i=0;i<bytes.length;i++)arr[i]=bytes.charCodeAt(i);
+    const blob=new Blob([arr],{type:'application/pdf'});
+    const url=URL.createObjectURL(blob);
+    window.open(url,'_blank');
+    setTimeout(()=>URL.revokeObjectURL(url),60000);
+  }catch(e){showToast('Erreur ouverture PDF','err');}
 }
 function delAssurance(id){
   if(!confirm('Supprimer cette assurance ?'))return;
@@ -1042,8 +1137,32 @@ function showToast(msg,type){
 }
 
 // ===== INIT =====
-if('serviceWorker' in navigator)navigator.serviceWorker.register('/suivi-carburant/sw.js').catch(()=>{});
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('/suivi-carburant/sw.js').then(reg=>{
+    // Verifie activement s'il existe une nouvelle version (le check auto du navigateur est trop lent/rare)
+    reg.update().catch(()=>{});
+    document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')reg.update().catch(()=>{});});
+    // Si un SW est deja en attente, on le fait passer actif tout de suite
+    if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});
+    reg.addEventListener('updatefound',()=>{
+      const nw=reg.installing;
+      if(!nw)return;
+      nw.addEventListener('statechange',()=>{
+        if(nw.state==='installed'&&navigator.serviceWorker.controller){
+          nw.postMessage({type:'SKIP_WAITING'});
+        }
+      });
+    });
+  }).catch(()=>{});
+  // Des qu'une nouvelle version prend le controle, on recharge une seule fois pour charger les nouveaux fichiers
+  let swRefreshed=false;
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{
+    if(swRefreshed)return;swRefreshed=true;location.reload();
+  });
+}
 load();gDriveHandleToken();renderVBar();renderAll();setTimeout(checkAndNotify,2000);
+setTimeout(autoBackupCheck,3000);
+setInterval(autoBackupCheck,3600000); // revérifie toutes les heures si l'app reste ouverte
 </script>
 </body>
                                                         </html>
