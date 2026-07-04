@@ -866,7 +866,9 @@ function dl(blob,name){const url=URL.createObjectURL(blob);const a=document.crea
 const GID='354411309659-ijlcjm2ojhu1vvd04rd7uokdofgs767u.apps.googleusercontent.com';
 const GFILE='suivi_carburant_backup.json';
 function gDriveAuth(){
-  const redirect=encodeURIComponent(location.origin+location.pathname);
+  // URI fixe (peu importe si on arrive via /suivi-carburant/ ou /suivi-carburant/index.html)
+  // -> DOIT etre ajoutee telle quelle dans Google Cloud Console (Identifiants > ce Client OAuth > URI de redirection autorisees)
+  const redirect=encodeURIComponent('https://souleydiop.github.io/suivi-carburant/');
   location.href=`https://accounts.google.com/o/oauth2/v2/auth?client_id=${GID}&redirect_uri=${redirect}&response_type=token&scope=${encodeURIComponent('https://www.googleapis.com/auth/drive.file')}&prompt=consent`;
 }
 function gDriveHandleToken(){
